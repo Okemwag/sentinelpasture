@@ -28,15 +28,18 @@ def train():
     config = ModelConfig()
     
     # Override for smaller training (fast iteration)
+    # Override for smaller training (fast iteration)
     config.n_layer = 4
     config.n_head = 4
     config.n_embd = 128
+    config.n_kv_head = 4 # GQA same as n_head for small model, or 2
     config.block_size = 64
+    config.bias = False
     config.batch_size = 16 # Not in config class but used here
     batch_size = 32
     
     learning_rate = 1e-3
-    max_iters = 5000
+    max_iters = 50
     lr_decay_iters = 5000
     min_lr = 1e-4 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
