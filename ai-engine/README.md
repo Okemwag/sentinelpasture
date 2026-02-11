@@ -2,6 +2,49 @@
 
 A powerful, state-of-the-art AI engine combining multiple advanced architectures and techniques for comprehensive threat analysis, decision support, and predictive intelligence.
 
+## Quick Start
+
+```bash
+# Install dependencies
+pip install -e .
+
+# Run basic example
+python examples/basic_usage.py
+
+# Run tests
+make test
+```
+
+## Project Structure
+
+```
+ai-engine/
+├── core/                    # Core AI components
+│   ├── signal_processor.py
+│   ├── threat_analyzer.py
+│   ├── advanced_learning.py
+│   ├── causal_inference.py
+│   ├── quantum_optimizer.py
+│   ├── state_space_models.py
+│   ├── neural_architecture_search.py
+│   ├── multimodal_fusion.py
+│   └── explainable_ai.py
+├── config/                  # Configuration management
+│   ├── settings.py
+│   └── constants.py
+├── utils/                   # Utility functions
+│   ├── logging.py
+│   ├── validation.py
+│   ├── metrics.py
+│   └── decorators.py
+├── tests/                   # Test suite
+├── examples/                # Usage examples
+├── orchestrator.py          # Main orchestrator
+├── factory.py              # Component factory
+├── interfaces.py           # Abstract interfaces
+└── exceptions.py           # Custom exceptions
+```
+
 ## Architecture Overview
 
 ### Core Components
@@ -80,12 +123,57 @@ A powerful, state-of-the-art AI engine combining multiple advanced architectures
 
 ## Installation
 
-```bash
-# Install dependencies
-pip install torch numpy scipy scikit-learn sentence-transformers tiktoken
+### From Source
 
-# Optional: For GPU acceleration
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```bash
+# Clone repository
+git clone <repository-url>
+cd ai-engine
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install package
+pip install -e .
+
+# Install development dependencies
+pip install -e ".[dev]"
+```
+
+### Using pip (when published)
+
+```bash
+pip install ai-engine
+```
+
+## Configuration
+
+Create a configuration file or use environment variables:
+
+```bash
+# Using config file
+export AI_ENGINE_CONFIG=config.json
+
+# Or use default settings
+python examples/basic_usage.py
+```
+
+Example configuration (`config.json`):
+
+```json
+{
+  "model": {
+    "device": "cpu",
+    "embedding_model": "all-MiniLM-L6-v2"
+  },
+  "learning": {
+    "meta_learning_enabled": true,
+    "ensemble_size": 5
+  },
+  "debug": false,
+  "log_level": "INFO"
+}
 ```
 
 ## Usage
@@ -93,29 +181,53 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 ### Basic Usage
 
 ```python
-from ai_engine.orchestrator import AIOrchestrator
+import asyncio
+from ai_engine import AIOrchestrator, Settings, setup_logging
 
-# Initialize orchestrator
-orchestrator = AIOrchestrator(config={
-    "device": "cuda",  # or "cpu"
-    "embedding_model": "all-MiniLM-L6-v2"
-})
+async def main():
+    # Setup logging
+    setup_logging(level="INFO")
+    
+    # Create settings
+    settings = Settings()
+    settings.model.device = "cpu"
+    
+    # Initialize orchestrator
+    orchestrator = AIOrchestrator(settings=settings)
+    
+    # Process signals
+    raw_signals = [
+        {
+            "type": "social_media",
+            "source": "verified_media",
+            "data": {"text": "Protest gathering downtown", "likes": 1000},
+            "location": {"latitude": 40.7128, "longitude": -74.0060},
+            "temporal": {"timestamp": "2024-01-15T10:30:00"}
+        }
+    ]
+    
+    result = await orchestrator.process_intelligence_pipeline(raw_signals)
+    
+    print(f"Threat Level: {result['assessment']['threat_level']}")
+    print(f"Indicators: {len(result['indicators'])}")
 
-# Process signals
-raw_signals = [
-    {
-        "type": "social_media",
-        "source": "verified_media",
-        "data": {"text": "Protest gathering downtown", "likes": 1000},
-        "location": {"latitude": 40.7128, "longitude": -74.0060},
-        "temporal": {"timestamp": "2024-01-15T10:30:00"}
-    }
-]
+if __name__ == "__main__":
+    asyncio.run(main())
+```
 
-result = await orchestrator.process_intelligence_pipeline(raw_signals)
+### Using Factory Pattern
 
-print(f"Threat Level: {result['assessment']['threat_level']}")
-print(f"Indicators: {len(result['indicators'])}")
+```python
+from ai_engine import ComponentFactory, Settings
+
+# Create factory with custom settings
+settings = Settings()
+factory = ComponentFactory(settings)
+
+# Create components
+signal_processor = factory.create_signal_processor()
+threat_analyzer = factory.create_threat_analyzer()
+meta_learner = factory.create_meta_learner()
 ```
 
 ### Advanced Features
@@ -214,54 +326,83 @@ print(f"Confidence: {explanation['confidence']:.2%}")
 - **Adaptation Speed**: <5 examples for new patterns
 - **Explainability**: Full decision transparency
 
-## Model Architectures
+## Development
 
-### Custom GPT (model.py)
-- Modern transformer with RMSNorm, SwiGLU, RoPE, and GQA
-- Configurable depth and width
-- Efficient training and inference
+### Setup Development Environment
 
-### Mamba/S4 State Space Models
-- Linear-time sequence modeling
-- Efficient for very long sequences (100K+ tokens)
-- Selective state space mechanism
+```bash
+# Install development dependencies
+make install-dev
 
-### Hybrid Architectures
-- Combines SSM efficiency with Transformer expressiveness
-- Best of both worlds for complex temporal patterns
-
-## Configuration
-
-```python
-config = {
-    "device": "cuda",  # or "cpu"
-    "embedding_model": "all-MiniLM-L6-v2",
-    "meta_learning": {
-        "inner_lr": 0.01,
-        "meta_lr": 0.001,
-        "adaptation_steps": 5
-    },
-    "reinforcement_learning": {
-        "gamma": 0.99,
-        "epsilon": 0.2,
-        "learning_rate": 3e-4
-    },
-    "quantum_optimization": {
-        "n_qubits": 10,
-        "n_iterations": 1000,
-        "cooling_rate": 0.995
-    }
-}
+# Run all checks
+make all
 ```
 
-## Contributing
+### Code Quality
 
-This is a comprehensive AI system designed for critical decision support. Contributions should maintain high standards for:
-- Code quality and documentation
-- Performance and efficiency
-- Explainability and transparency
-- Safety and robustness
+```bash
+# Format code
+make format
+
+# Run linters
+make lint
+
+# Type checking
+make type-check
+
+# Run tests
+make test
+```
+
+### Project Standards
+
+- **Code Style**: Black (line length: 100)
+- **Import Sorting**: isort
+- **Type Hints**: Required for public APIs
+- **Documentation**: Docstrings for all public functions
+- **Testing**: Minimum 80% coverage
+- **Async**: Use async/await for I/O operations
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+## Documentation
+
+- [Architecture](ARCHITECTURE.md) - System architecture and design patterns
+- [Contributing](CONTRIBUTING.md) - Development guidelines
+- [Examples](examples/) - Usage examples
+- [API Reference](docs/) - Detailed API documentation
+
+## Troubleshooting
+
+### Common Issues
+
+**Import Errors**
+```bash
+# Ensure package is installed
+pip install -e .
+```
+
+**CUDA/GPU Issues**
+```python
+# Force CPU mode
+settings = Settings()
+settings.model.device = "cpu"
+```
+
+**Memory Issues**
+```python
+# Reduce batch size
+settings.model.batch_size = 16
+settings.processing.max_signal_buffer_size = 1000
+```
 
 ## License
 
 Proprietary - Advanced AI Engine for Decision Intelligence
+
+## Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Check [ARCHITECTURE.md](ARCHITECTURE.md) for design details
+- Review [examples/](examples/) for usage patterns
