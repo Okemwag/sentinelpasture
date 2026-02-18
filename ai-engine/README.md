@@ -112,6 +112,11 @@ ai-engine/
 - **Automated Architecture Search**: Self-improving through architecture evolution
 - **Multimodal Integration**: Seamless fusion of diverse data sources
 - **Full Explainability**: Transparent, interpretable AI decisions
+- **Continual Learning**: Learn new tasks without forgetting previous knowledge
+- **Graph Neural Networks**: Advanced relational reasoning and network analysis
+- **Federated Learning**: Privacy-preserving distributed learning across nodes
+- **Neuro-Symbolic AI**: Combining neural networks with logical reasoning
+- **Self-Supervised Learning**: Learn powerful representations without labels
 
 ### Performance Characteristics
 
