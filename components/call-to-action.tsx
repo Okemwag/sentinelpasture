@@ -17,6 +17,11 @@ export default function CallToAction() {
                 <span>Contact Us</span>
               </Link>
             </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/signin">
+                <span>Access Platform</span>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

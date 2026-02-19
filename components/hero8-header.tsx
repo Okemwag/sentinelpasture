@@ -14,6 +14,7 @@ const menuItems = [
 ];
 
 const platformLinks = [
+  { name: "Platform Access", href: "/signin", description: "Sign in to the dashboard" },
   { name: "Intelligence Dashboard", href: "/platform/dashboard", description: "Real-time governance monitoring" },
   { name: "Early Warning System", href: "/platform/early-warning", description: "Detect instability signals" },
   { name: "Analysis Engine", href: "/platform/analysis", description: "Deep causal analysis" },
@@ -222,6 +223,9 @@ export const HeroHeader = () => {
                 </div>
               </div>
               <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/signin">Sign In</Link>
+                </Button>
                 <ModeToggle />
               </div>
             </div>
