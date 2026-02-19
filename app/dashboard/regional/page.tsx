@@ -4,36 +4,52 @@ import RiskMap from "@/components/dashboard/risk-map";
 
 const regionalData = [
   {
-    region: "Northern Region",
-    population: "2.4M",
+    region: "Nairobi County",
+    population: "4.4M",
     stabilityIndex: 72,
     trend: "Stable",
     primaryDriver: "Economic stress",
     confidence: "High",
   },
   {
-    region: "Central Region",
-    population: "3.8M",
+    region: "Mombasa County",
+    population: "1.2M",
+    stabilityIndex: 68,
+    trend: "Moderating",
+    primaryDriver: "Infrastructure strain",
+    confidence: "High",
+  },
+  {
+    region: "Kisumu County",
+    population: "1.1M",
     stabilityIndex: 81,
     trend: "Stable",
     primaryDriver: "Mobility disruption",
     confidence: "Medium",
   },
   {
-    region: "Southern Region",
-    population: "1.9M",
-    stabilityIndex: 67,
-    trend: "Moderating",
-    primaryDriver: "Incident contagion",
+    region: "Nakuru County",
+    population: "2.2M",
+    stabilityIndex: 75,
+    trend: "Stable",
+    primaryDriver: "Climate anomaly",
     confidence: "High",
   },
   {
-    region: "Eastern District",
-    population: "1.2M",
-    stabilityIndex: 69,
+    region: "Turkana County",
+    population: "926K",
+    stabilityIndex: 64,
     trend: "Elevated",
     primaryDriver: "Climate anomaly",
     confidence: "Medium",
+  },
+  {
+    region: "Kiambu County",
+    population: "2.4M",
+    stabilityIndex: 78,
+    trend: "Stable",
+    primaryDriver: "Economic stress",
+    confidence: "High",
   },
 ];
 
@@ -55,8 +71,8 @@ export default function RegionalRiskPage() {
           showExplainLink: true,
         }}
       >
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-6 px-6">
+          <table className="w-full min-w-[768px]">
             <thead>
               <tr className="border-b border-[#E5E7EB]">
                 <th className="text-left py-3 px-4 text-[13px] font-medium text-[#6B7280]">

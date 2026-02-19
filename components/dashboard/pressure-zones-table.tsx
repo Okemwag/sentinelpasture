@@ -32,8 +32,8 @@ const mockData: PressureZone[] = [
 
 export default function PressureZonesTable() {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div className="overflow-x-auto -mx-6 px-6">
+      <table className="w-full min-w-[640px]">
         <thead>
           <tr className="border-b border-[#E5E7EB]">
             <th className="text-left py-3 px-4 text-[13px] font-medium text-[#6B7280]">

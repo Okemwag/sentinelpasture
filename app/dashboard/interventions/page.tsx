@@ -14,29 +14,36 @@ const interventions: Intervention[] = [
     category: "Economic stabilization program",
     expectedImpact: "High",
     timeToEffect: "Medium",
-    costBand: "$$$$",
+    costBand: "KES 800M - 1.2B",
     confidence: "High",
   },
   {
     category: "Infrastructure resilience enhancement",
     expectedImpact: "Moderate",
     timeToEffect: "Long",
-    costBand: "$$$$$",
+    costBand: "KES 1.5B - 2.5B",
     confidence: "Medium",
   },
   {
     category: "Community engagement initiative",
     expectedImpact: "Moderate",
     timeToEffect: "Short",
-    costBand: "$$",
+    costBand: "KES 150M - 300M",
     confidence: "High",
   },
   {
     category: "Education system support",
     expectedImpact: "Low",
     timeToEffect: "Long",
-    costBand: "$$$",
+    costBand: "KES 500M - 800M",
     confidence: "Medium",
+  },
+  {
+    category: "Healthcare capacity building",
+    expectedImpact: "High",
+    timeToEffect: "Medium",
+    costBand: "KES 600M - 1B",
+    confidence: "High",
   },
 ];
 
@@ -62,8 +69,8 @@ export default function InterventionsPage() {
           showExplainLink: true,
         }}
       >
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-6 px-6">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b border-[#E5E7EB]">
                 <th className="text-left py-3 px-4 text-[13px] font-medium text-[#6B7280]">
@@ -98,7 +105,7 @@ export default function InterventionsPage() {
                   <td className="py-3 px-4 text-[15px] text-[#6B7280]">
                     {intervention.timeToEffect}
                   </td>
-                  <td className="py-3 px-4 text-[15px] text-[#6B7280]">
+                  <td className="py-3 px-4 text-[15px] text-[#6B7280] whitespace-nowrap">
                     {intervention.costBand}
                   </td>
                   <td className="py-3 px-4 text-[15px] text-[#111111]">
