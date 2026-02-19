@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "backend": "cd backend && python3 main.py",
+    "backend:install": "cd backend && pip install -r requirements.txt",
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm backend\""
   },
   "dependencies": {
     "@iconify/react": "^6.0.2",

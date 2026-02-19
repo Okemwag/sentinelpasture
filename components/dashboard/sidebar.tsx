@@ -85,19 +85,29 @@ export default function DashboardSidebar() {
         </nav>
 
         {/* User Info at Bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#E5E7EB]">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center">
-              <Icon icon="mdi:account-outline" className="w-5 h-5 text-[#6B7280]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-medium text-[#111111] truncate">
-                Administrator
+        <div className="absolute bottom-0 left-0 right-0 border-t border-[#E5E7EB]">
+          <div className="p-4">
+            <div className="flex items-center gap-3 px-2 mb-3">
+              <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center">
+                <Icon icon="mdi:account-outline" className="w-5 h-5 text-[#6B7280]" />
               </div>
-              <div className="text-[12px] text-[#6B7280]">
-                Ministry Access
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium text-[#111111] truncate">
+                  Administrator
+                </div>
+                <div className="text-[12px] text-[#6B7280]">
+                  Ministry Access
+                </div>
               </div>
             </div>
+            
+            <Link
+              href="/signin"
+              className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-[8px] hover:bg-[#F9FAFB] transition-colors duration-150"
+            >
+              <Icon icon="mdi:logout" className="w-4 h-4" />
+              <span>Sign Out</span>
+            </Link>
           </div>
         </div>
       </aside>
