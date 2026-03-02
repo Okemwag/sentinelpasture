@@ -1,22 +1,24 @@
-"""Build a first baseline training table and summary artifact.
-
-This is a no-dependency placeholder for the first baseline workflow. It
-constructs a merged monthly dataset and computes risk bands that a later
-LightGBM implementation can consume directly.
-"""
+"""Build a baseline training table and persist a real scoring artifact."""
 
 from __future__ import annotations
 
 import csv
 import json
+from datetime import UTC, datetime
 from pathlib import Path
+
+from ai.datasets.builders.build_features import build_monthly_features
+from ai.datasets.builders.build_labels import build_monthly_labels
 
 
 ROOT = Path(__file__).resolve().parents[3]
 PROCESSED_DIR = ROOT / "data" / "processed"
+ARTIFACTS_DIR = ROOT / "data" / "artifacts"
 
 
 def build_baseline_training_dataset() -> None:
+    _ensure_source_tables()
+
     features = _read_indexed(PROCESSED_DIR / "rainfall_features_monthly_national.csv")
     labels = _read_indexed(PROCESSED_DIR / "event_labels_monthly_national.csv")
 
@@ -100,6 +102,28 @@ def build_baseline_training_dataset() -> None:
     with output_json.open("w", encoding="utf-8") as handle:
         json.dump(summary, handle, indent=2)
 
+    _write_model_artifact(merged_rows, low_cut, high_cut)
+
+
+def _ensure_source_tables() -> None:
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    if not (PROCESSED_DIR / "rainfall_features_monthly_national.csv").exists():
+        try:
+            build_monthly_features()
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                "Missing rainfall source data. Populate apps/ai/data/raw/ with the CHIRPS-derived "
+                "rainfall export before training."
+            ) from exc
+    if not (PROCESSED_DIR / "event_labels_monthly_national.csv").exists():
+        try:
+            build_monthly_labels()
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                "Missing ACLED label source data. Populate apps/ai/data/raw/ with the event exports "
+                "before training."
+            ) from exc
+
 
 def _read_indexed(path: Path) -> dict[str, dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
@@ -122,6 +146,77 @@ def _risk_band(score: float, low_cut: float, high_cut: float) -> str:
     if score <= high_cut:
         return "moderate"
     return "high"
+
+
+def _write_model_artifact(rows: list[dict[str, object]], low_cut: float, high_cut: float) -> None:
+    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    if not rows:
+        raise ValueError("No training rows were produced; cannot train baseline artifact.")
+
+    feature_names = [
+        "rfh_mean",
+        "rfh_avg_mean",
+        "rfh_anomaly",
+        "r1h_mean",
+        "r3h_mean",
+        "rfq_mean",
+    ]
+
+    feature_values: dict[str, list[float]] = {
+        name: [float(row[name]) for row in rows] for name in feature_names
+    }
+    targets = [float(row["target_score"]) for row in rows]
+    target_min = min(targets)
+    target_max = max(targets)
+    target_span = max(target_max - target_min, 1e-9)
+    normalized_targets = [(value - target_min) / target_span for value in targets]
+
+    raw_weights = {
+        name: _signed_correlation(feature_values[name], normalized_targets) for name in feature_names
+    }
+    weight_sum = sum(abs(value) for value in raw_weights.values()) or 1.0
+    feature_weights = {
+        name: round(abs(raw_weights[name]) / weight_sum, 6) for name in feature_names
+    }
+
+    payload = {
+        "model_version": "baseline-risk-model-v1",
+        "trained_at": datetime.now(UTC).isoformat(),
+        "feature_names": feature_names,
+        "feature_min": {name: min(values) for name, values in feature_values.items()},
+        "feature_max": {name: max(values) for name, values in feature_values.items()},
+        "feature_mean": {
+            name: round(sum(values) / max(len(values), 1), 6) for name, values in feature_values.items()
+        },
+        "feature_weights": feature_weights,
+        "target_bounds": {"min": target_min, "max": target_max},
+        "band_thresholds": {"moderate": low_cut, "high": high_cut},
+        "training_rows": len(rows),
+        "source_period": {"start": str(rows[0]["period"]), "end": str(rows[-1]["period"])},
+    }
+
+    with (ARTIFACTS_DIR / "baseline_risk_model.json").open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+
+
+def _signed_correlation(left: list[float], right: list[float]) -> float:
+    if len(left) != len(right) or not left:
+        return 0.0
+    left_mean = sum(left) / len(left)
+    right_mean = sum(right) / len(right)
+    numerator = 0.0
+    left_sq = 0.0
+    right_sq = 0.0
+    for left_value, right_value in zip(left, right, strict=True):
+        left_delta = left_value - left_mean
+        right_delta = right_value - right_mean
+        numerator += left_delta * right_delta
+        left_sq += left_delta * left_delta
+        right_sq += right_delta * right_delta
+    denominator = (left_sq * right_sq) ** 0.5
+    if denominator <= 0:
+        return 0.0
+    return numerator / denominator
 
 
 if __name__ == "__main__":

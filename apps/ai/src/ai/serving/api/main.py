@@ -1,21 +1,18 @@
 """FastAPI inference service aligned to the target monorepo contract."""
 
-from datetime import datetime
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from .schemas import (
-    Driver,
     ExplainRequest,
     ExplainResponse,
-    InterventionOption,
     InterventionRequest,
     InterventionResponse,
     RiskRequest,
     RiskResponse,
 )
-
-MODEL_VERSION = "policy-pack-v0.1"
+from ..runtime.feature_fetcher import list_available_regions, load_feature_snapshot
+from ..runtime.model_loader import load_baseline_model
+from ..runtime.response_builder import build_explanation, build_interventions, score_snapshot, ScoredSnapshot
 
 app = FastAPI(
     title="Governance Intel AI Inference",
@@ -31,66 +28,91 @@ async def health() -> dict[str, str]:
 
 @app.post("/infer/risk", response_model=RiskResponse)
 async def infer_risk(request: RiskRequest) -> RiskResponse:
-    score = min(0.92, 0.45 + (len(request.signals) * 0.05))
-    timestamp = request.at_time or datetime.utcnow()
-    drivers = [
-        Driver(name="Market stress", contribution=0.34, direction="up"),
-        Driver(name="Mobility anomaly", contribution=0.21, direction="up"),
-        Driver(name="Service disruption", contribution=0.16, direction="up"),
-    ]
+    model, scored = _scored_snapshot(request.region_id)
+    signal_adjustment = min(len(request.signals) * 0.01, 0.08)
+    adjusted_score = min(0.99, round(scored.risk_score + signal_adjustment, 4))
 
     return RiskResponse(
-        region_id=request.region_id,
-        risk_score=round(score, 2),
-        confidence_band="medium" if score < 0.7 else "high",
-        confidence=0.82,
-        top_drivers=drivers,
-        known_data_gaps=["clinic load incomplete", "rural mobility lagging 24h"],
-        model_version=MODEL_VERSION,
-        feature_snapshot_timestamp=timestamp,
+        region_id=scored.snapshot.region_id,
+        risk_score=adjusted_score,
+        confidence_band=scored.confidence_band,
+        confidence=scored.confidence,
+        top_drivers=scored.drivers,
+        known_data_gaps=scored.known_data_gaps,
+        model_version=model.model_version,
+        feature_snapshot_timestamp=scored.snapshot.observed_at,
     )
 
 
 @app.post("/infer/explain", response_model=ExplainResponse)
 async def infer_explain(request: ExplainRequest) -> ExplainResponse:
+    model, scored = _scored_snapshot(request.region_id)
+    summary, notes = build_explanation(scored)
     return ExplainResponse(
-        region_id=request.region_id,
-        summary="Risk is elevated due to converging economic and mobility stressors.",
-        top_drivers=[
-            Driver(name="Economic stress", contribution=0.31, direction="up"),
-            Driver(name="Cross-corridor movement shift", contribution=0.22, direction="up"),
-        ],
-        uncertainty_notes=[
-            "Education attendance data is two days stale.",
-            "One market feed is operating with fallback estimates.",
-        ],
-        model_version=MODEL_VERSION,
-        feature_snapshot_timestamp=datetime.utcnow(),
+        region_id=scored.snapshot.region_id,
+        summary=summary,
+        top_drivers=scored.drivers,
+        uncertainty_notes=notes,
+        model_version=model.model_version,
+        feature_snapshot_timestamp=scored.snapshot.observed_at,
     )
 
 
 @app.post("/infer/interventions", response_model=InterventionResponse)
 async def infer_interventions(request: InterventionRequest) -> InterventionResponse:
-    severity = "High" if request.risk_score >= 0.7 else "Moderate"
+    model, scored = _scored_snapshot(request.region_id)
+    if request.risk_score > scored.risk_score:
+        scored = ScoredSnapshot(
+            snapshot=scored.snapshot,
+            risk_score=request.risk_score,
+            confidence=scored.confidence,
+            confidence_band=scored.confidence_band,
+            drivers=scored.drivers,
+            known_data_gaps=scored.known_data_gaps,
+        )
     return InterventionResponse(
-        region_id=request.region_id,
-        interventions=[
-            InterventionOption(
-                category="Targeted mediation deployment",
-                expected_impact=severity,
-                time_to_effect="Short",
-                confidence="High",
-                constraints_applied=["proportional response", "civilian protection"],
-            ),
-            InterventionOption(
-                category="Market-day security hardening",
-                expected_impact="Moderate",
-                time_to_effect="Short",
-                confidence="Medium",
-                constraints_applied=["minimum force posture", "county coordination"],
-            ),
-        ],
-        model_version=MODEL_VERSION,
-        feature_snapshot_timestamp=datetime.utcnow(),
+        region_id=scored.snapshot.region_id,
+        interventions=build_interventions(scored),
+        model_version=model.model_version,
+        feature_snapshot_timestamp=scored.snapshot.observed_at,
     )
 
+
+@app.get("/infer/regions")
+async def infer_regions(limit: int = 50) -> dict[str, object]:
+    try:
+        model = load_baseline_model()
+        snapshots = list_available_regions(limit=min(max(limit, 1), 200))
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    rows = []
+    for snapshot in snapshots:
+        scored = score_snapshot(model, snapshot)
+        rows.append(
+            {
+                "region_id": snapshot.region_id,
+                "risk_score": scored.risk_score,
+                "confidence": scored.confidence,
+                "confidence_band": scored.confidence_band,
+                "primary_driver": scored.drivers[0].name if scored.drivers else "Unknown",
+                "feature_snapshot_timestamp": snapshot.observed_at.isoformat(),
+            }
+        )
+
+    rows.sort(key=lambda item: item["risk_score"], reverse=True)
+    return {
+        "regions": rows,
+        "model_version": model.model_version,
+        "feature_count": len(model.feature_names),
+        "training_rows": model.training_rows,
+    }
+
+
+def _scored_snapshot(region_id: str):
+    try:
+        model = load_baseline_model()
+        snapshot = load_feature_snapshot(region_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return model, score_snapshot(model, snapshot)
