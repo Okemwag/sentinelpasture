@@ -44,8 +44,7 @@ class AIEngineService {
 
   constructor() {
     this.baseUrl = AI_ENGINE_URL;
-    // Use mock data if AI engine is not available
-    this.useMockData = process.env.USE_MOCK_AI === 'true' || true;
+    this.useMockData = process.env.USE_MOCK_AI === 'true';
   }
 
   async processSignals(signals: Signal[]): Promise<AIEngineResponse> {
