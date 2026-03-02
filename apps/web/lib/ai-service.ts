@@ -1,7 +1,7 @@
 // Backend AI integration service.
 // This client talks to the active backend API, not directly to model internals.
 
-const AI_API_URL = process.env.AI_ENGINE_URL || 'http://localhost:8000';
+const AI_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export interface Signal {
   type: string;
@@ -53,7 +53,7 @@ class AIService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/process`, {
+      const response = await fetch(`${this.baseUrl}/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ class AIService {
 
     try {
       const response = await fetch(
-        `${this.baseUrl}/api/predict?region=${region}&timeframe=${timeframe}`
+        `${this.baseUrl}/predict?region=${region}&timeframe=${timeframe}`
       );
 
       if (!response.ok) {
@@ -99,7 +99,7 @@ class AIService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/analyze-drivers`, {
+      const response = await fetch(`${this.baseUrl}/analyze-drivers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,7 +124,7 @@ class AIService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/recommend-interventions`, {
+      const response = await fetch(`${this.baseUrl}/recommend-interventions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,0 +1,30 @@
+{
+  "dataset": "training_baseline_monthly_national",
+  "rows": 350,
+  "date_range": {
+    "start": "1997-01",
+    "end": "2026-02"
+  },
+  "feature_columns": [
+    "rfh_mean",
+    "rfh_avg_mean",
+    "rfh_anomaly",
+    "r1h_mean",
+    "r3h_mean",
+    "rfq_mean"
+  ],
+  "label_columns": [
+    "demonstrations_events",
+    "civilian_targeting_events",
+    "civilian_targeting_fatalities",
+    "political_violence_events",
+    "political_violence_fatalities",
+    "total_events",
+    "total_fatalities"
+  ],
+  "target_definition": "total_events + min(total_fatalities, 100) / 10",
+  "risk_band_thresholds": {
+    "low_upper": 23.5,
+    "moderate_upper": 61.0
+  }
+}

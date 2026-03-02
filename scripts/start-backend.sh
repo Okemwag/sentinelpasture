@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Start the Go API service.
+# Start the Python API service.
 
 echo "Starting National Risk Intelligence Backend API..."
 echo ""
 
-# Check if Go is installed
-if ! command -v go &> /dev/null; then
-    echo "Go is not installed. Please install Go 1.22 or higher."
+# Check if Python is installed
+if ! command -v python3 &> /dev/null; then
+    echo "Python 3 is not installed. Please install Python 3.11 or higher."
     exit 1
 fi
 
@@ -17,11 +17,20 @@ if [ ! -d "apps/api" ]; then
     exit 1
 fi
 
-echo "Starting Go API server on http://localhost:8000"
-echo "API documentation: http://localhost:8000/docs"
+cd apps/api
+
+if [ ! -d ".venv" ]; then
+    echo "Creating apps/api virtual environment..."
+    python3 -m venv .venv
+fi
+
+source .venv/bin/activate
+pip install -e . >/dev/null
+
+echo "Starting Python API server on http://localhost:8000"
+echo "HTTP endpoints are served from apps/api"
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""
 
-cd apps/api
-API_ADDR=:8000 GOCACHE=/tmp/go-build go run ./cmd/api
+python3 -m uvicorn api_service.main:app --host 0.0.0.0 --port 8000 --reload

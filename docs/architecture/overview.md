@@ -18,11 +18,17 @@ then help decision-makers choose proportional, auditable interventions.
 
 `apps/api/`
 Primary control-plane API. This is where RBAC, dashboard read models, reports,
-audit trails, and explainability metadata are exposed.
+audit trails, and explainability metadata are exposed. The preferred runtime is
+FastAPI with shared Pydantic contracts.
 
 `apps/ingestion/`
 Data-plane ingestion service. This is where external feeds, manual uploads,
 deduplication, normalization, and persistence happen.
+
+`apps/feature_pipeline/`
+Target feature-engineering boundary. This is where point-in-time safe feature
+generation, validation, and reproducibility controls should converge as the data
+layer matures.
 
 `apps/scheduler/`
 Job orchestration. This is where daily scoring, retraining triggers, and data
@@ -30,7 +36,8 @@ quality routines are managed.
 
 `apps/ai/`
 Modeling and inference core. This is where risk scoring, explanations, and
-intervention ranking are trained and served.
+intervention ranking are trained and served. Early on, training and inference
+can remain together here before being split into dedicated Python services.
 
 `apps/web/`
 User-facing dashboard and administrative UI.

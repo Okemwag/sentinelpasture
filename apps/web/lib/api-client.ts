@@ -1,6 +1,6 @@
 // API Client for dashboard backend communication
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export interface ApiResponse<T> {
   data: T;

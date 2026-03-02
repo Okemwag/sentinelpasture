@@ -14,7 +14,6 @@
     "typecheck:web": "./node_modules/.bin/tsc --noEmit -p apps/web/tsconfig.json",
     "backend": "./scripts/start-backend.sh",
     "ai": "./scripts/start-ai.sh",
-    "backend:install": "cd backend && pip install -r requirements.txt",
     "dev:all": "npm run dev:web"
   }
 }

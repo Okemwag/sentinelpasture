@@ -35,9 +35,9 @@ The target shape of this repository is:
 - `docs/` for architecture, governance, runbooks, and product decisions.
 - `contracts/` for shared API specs, schemas, and service contracts.
 - `infra/` for deployment, Terraform, Kubernetes, Helm, and operational scripts.
-- `apps/api/` for the Go API service.
-- `apps/ingestion/` for the Go ingestion and normalization service.
-- `apps/scheduler/` for the Go job orchestration service.
+- `apps/api/` for the FastAPI backend service.
+- `apps/ingestion/` for the Python ingestion and normalization service.
+- `apps/scheduler/` for the Python job orchestration service.
 - `apps/ai/` for the Python modeling and inference workspace.
 - `apps/web/` for the frontend dashboard and presentation layer.
 
@@ -46,12 +46,20 @@ The target shape of this repository is:
 The currently runnable implementation is still in transition:
 
 - the active Next.js frontend now lives in `apps/web/`;
-- the active Python backend is still in `backend/`;
-- the existing `ai-engine/` directory is still experimental and not yet the
-  production inference path.
+- the active backend runtime now lives in `apps/api/`;
+- the active AI inference runtime now lives in `apps/ai/`.
 
 This is intentional during migration so the system stays runnable while the new
 monorepo structure is established.
+
+## Delivery Roadmap
+
+The implementation plan is now tracked in
+[`docs/product/roadmap.md`](docs/product/roadmap.md). It defines:
+
+- phased delivery from governance foundations through pilot deployment,
+- the MVP backend, data, AI, dashboard, and mobile milestones,
+- the definition of "fully functional" for this platform.
 
 ## Run Locally
 
