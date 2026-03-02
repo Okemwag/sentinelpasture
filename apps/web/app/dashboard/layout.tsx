@@ -1,4 +1,5 @@
 import { Inter } from "next/font/google";
+import AuthGate from "@/components/auth-gate";
 import DashboardSidebar from "@/components/dashboard/sidebar";
 
 const inter = Inter({
@@ -19,14 +20,16 @@ export default function DashboardLayout({
 }) {
   return (
     <div className={`${inter.variable} font-sans`}>
-      <div className="flex min-h-screen bg-[#FAFAFA]">
-        <DashboardSidebar />
-        <main className="flex-1 lg:ml-64 w-full">
-          <div className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
-            {children}
-          </div>
-        </main>
-      </div>
+      <AuthGate>
+        <div className="flex min-h-screen bg-[#FAFAFA]">
+          <DashboardSidebar />
+          <main className="flex-1 lg:ml-64 w-full">
+            <div className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
+              {children}
+            </div>
+          </main>
+        </div>
+      </AuthGate>
     </div>
   );
 }

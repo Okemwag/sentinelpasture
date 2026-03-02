@@ -1,6 +1,9 @@
 // API Client for dashboard backend communication
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { authHeader, getApiBaseUrl, getApiRootUrl, type AuthSession, type AuthUser } from "@/lib/auth-session";
+
+const API_BASE_URL = getApiBaseUrl();
+const API_ROOT_URL = getApiRootUrl();
 
 export interface ApiResponse<T> {
   data: T;
@@ -29,12 +32,16 @@ class ApiClient {
         ...options,
         headers: {
           'Content-Type': 'application/json',
+          ...authHeader(),
           ...options?.headers,
         },
       });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        if (response.status === 401 && typeof window !== 'undefined') {
+          window.localStorage.removeItem('governance-intel-auth');
+        }
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
 
       return await response.json();
@@ -42,6 +49,37 @@ class ApiClient {
       console.error('API Request failed:', error);
       throw error;
     }
+  }
+
+  async login(username: string, password: string): Promise<AuthSession> {
+    const response = await fetch(`${API_ROOT_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Invalid credentials');
+    }
+
+    return await response.json();
+  }
+
+  async getCurrentUser(): Promise<AuthUser> {
+    const response = await fetch(`${API_ROOT_URL}/auth/me`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Unauthorized');
+    }
+
+    return await response.json();
   }
 
   // Dashboard Overview
@@ -173,7 +211,7 @@ class ApiClient {
       assessment: any;
       indicators: any[];
       recommendations: any[];
-    }>('/ai/process', {
+    }>('/process', {
       method: 'POST',
       body: JSON.stringify({ signals }),
     });
@@ -183,7 +221,7 @@ class ApiClient {
     return this.request<{
       predictions: any[];
       confidence: number;
-    }>(`/ai/predict?region=${region}&timeframe=${timeframe}`);
+    }>(`/predict?region=${region}&timeframe=${timeframe}`);
   }
 }
 

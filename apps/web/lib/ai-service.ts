@@ -1,7 +1,9 @@
 // Backend AI integration service.
 // This client talks to the active backend API, not directly to model internals.
 
-const AI_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { authHeader, getApiBaseUrl } from "@/lib/auth-session";
+
+const AI_API_URL = getApiBaseUrl();
 
 export interface Signal {
   type: string;
@@ -57,6 +59,7 @@ class AIService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeader(),
         },
         body: JSON.stringify({ signals }),
       });
@@ -79,7 +82,12 @@ class AIService {
 
     try {
       const response = await fetch(
-        `${this.baseUrl}/predict?region=${region}&timeframe=${timeframe}`
+        `${this.baseUrl}/predict?region=${region}&timeframe=${timeframe}`,
+        {
+          headers: {
+            ...authHeader(),
+          },
+        }
       );
 
       if (!response.ok) {
@@ -103,8 +111,9 @@ class AIService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeader(),
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ data }),
       });
 
       if (!response.ok) {
@@ -128,6 +137,7 @@ class AIService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeader(),
         },
         body: JSON.stringify({ region, riskProfile }),
       });

@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { clearAuthSession, readAuthSession } from "@/lib/auth-session";
 
 const navigationItems = [
   { label: "Overview", href: "/dashboard", icon: "mdi:view-dashboard-outline" },
@@ -18,7 +20,24 @@ const navigationItems = [
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [identity, setIdentity] = useState({ full_name: "Authorized User", role: "Restricted Access" });
+
+  useEffect(() => {
+    const session = readAuthSession();
+    if (session) {
+      setIdentity({
+        full_name: session.user.full_name,
+        role: `${session.user.role.charAt(0).toUpperCase()}${session.user.role.slice(1)} Access`,
+      });
+    }
+  }, []);
+
+  function handleSignOut() {
+    clearAuthSession();
+    router.push("/signin");
+  }
 
   return (
     <>
@@ -93,21 +112,22 @@ export default function DashboardSidebar() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium text-[#111111] truncate">
-                  Administrator
+                  {identity.full_name}
                 </div>
                 <div className="text-[12px] text-[#6B7280]">
-                  Ministry Access
+                  {identity.role}
                 </div>
               </div>
             </div>
-            
-            <Link
-              href="/signin"
+
+            <button
+              type="button"
+              onClick={handleSignOut}
               className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-[8px] hover:bg-[#F9FAFB] transition-colors duration-150"
             >
               <Icon icon="mdi:logout" className="w-4 h-4" />
               <span>Sign Out</span>
-            </Link>
+            </button>
           </div>
         </div>
       </aside>
