@@ -1,0 +1,2 @@
+"""LightGBM baseline model entrypoint."""
+

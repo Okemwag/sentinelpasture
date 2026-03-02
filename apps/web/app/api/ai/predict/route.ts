@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { aiEngineService } from '@/lib/ai-engine-service';
+import { aiService } from '@/lib/ai-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const region = searchParams.get('region') || 'national';
     const timeframe = searchParams.get('timeframe') || '7d';
 
-    const result = await aiEngineService.predictRisk(region, timeframe);
+    const result = await aiService.predictRisk(region, timeframe);
 
     return NextResponse.json({
       data: result,

@@ -1,6 +1,6 @@
 # apps/api
 
-Planned Go API service.
+Starter Go API service.
 
 Responsibilities:
 
@@ -10,5 +10,9 @@ Responsibilities:
 - intervention and outcome workflows,
 - audit trails and admin APIs.
 
-Migration note: the current active backend is still the Python service in
-`backend/` until the Go API is implemented.
+Current status:
+
+- this directory now contains a minimal runnable HTTP service scaffold,
+- the production-like backend is still the Python service in `backend/`,
+- this Go service is the place to migrate auth, RBAC, read models, audit, and
+  reporting next.

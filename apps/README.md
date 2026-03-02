@@ -8,5 +8,5 @@ Target service layout:
 - `ai/`: Python AI training and inference workspace.
 - `web/`: frontend dashboard and presentation layer.
 
-The currently runnable code has not been fully moved into these directories yet.
-This scaffold is the destination structure.
+The frontend has already been migrated into `apps/web/`.
+The backend and AI layers are still mid-migration.

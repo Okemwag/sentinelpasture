@@ -1,6 +1,6 @@
 # apps/ai
 
-Planned Python AI workspace.
+Starter Python AI workspace.
 
 Responsibilities:
 
@@ -10,4 +10,10 @@ Responsibilities:
 - explanation generation,
 - intervention ranking with policy constraints.
 
-Migration note: the current experimental AI code is still in `ai-engine/`.
+Current status:
+
+- this directory now contains a minimal contract-aligned inference service
+  scaffold,
+- the existing experimental modeling code is still in `ai-engine/`,
+- the next migration step is moving real training, registry, and feature logic
+  into this workspace.

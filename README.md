@@ -45,8 +45,7 @@ The target shape of this repository is:
 
 The currently runnable implementation is still in transition:
 
-- the active Next.js frontend is still at the repository root (`app/`,
-  `components/`, `lib/`);
+- the active Next.js frontend now lives in `apps/web/`;
 - the active Python backend is still in `backend/`;
 - the existing `ai-engine/` directory is still experimental and not yet the
   production inference path.
@@ -66,4 +65,10 @@ Backend:
 
 ```bash
 ./scripts/start-backend.sh
+```
+
+AI inference service:
+
+```bash
+./scripts/start-ai.sh
 ```

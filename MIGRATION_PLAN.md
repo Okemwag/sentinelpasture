@@ -16,6 +16,8 @@ monorepo.
 - update package scripts and workspace settings,
 - preserve identical runtime behavior.
 
+Status: completed.
+
 ## Phase 3: Replace The API Service
 
 - implement `apps/api/` in Go,

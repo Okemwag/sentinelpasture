@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { aiEngineService } from '@/lib/ai-engine-service';
+import { aiService } from '@/lib/ai-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await aiEngineService.processSignals(signals);
+    const result = await aiService.processSignals(signals);
 
     return NextResponse.json({
       data: result,

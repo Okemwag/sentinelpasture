@@ -1,7 +1,17 @@
 # apps/web
 
-Planned frontend application home.
+Active Next.js frontend workspace.
 
-Migration note: the currently active Next.js application is still at the repo
-root (`app/`, `components/`, `lib/`, `public/`) and will be moved here in a
-controlled migration.
+The application code now lives here:
+
+- `app/`
+- `components/`
+- `lib/`
+- `public/`
+- frontend config files (`next.config.ts`, `tsconfig.json`, and related files)
+
+Run it from the repo root with `npm run dev`, or directly with:
+
+```bash
+npm run dev --workspace web
+```
