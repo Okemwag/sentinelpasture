@@ -1,79 +1,73 @@
-interface PressureZone {
-  region: string;
-  riskTrend: string;
-  primaryDriver: string;
-  secondaryDriver: string;
-  confidence: string;
-}
+"use client";
 
-const mockData: PressureZone[] = [
-  {
-    region: "Southern Region",
-    riskTrend: "Increasing",
-    primaryDriver: "Incident contagion",
-    secondaryDriver: "Economic stress",
-    confidence: "High",
-  },
-  {
-    region: "Eastern District",
-    riskTrend: "Elevated",
-    primaryDriver: "Climate anomaly",
-    secondaryDriver: "Mobility disruption",
-    confidence: "Medium",
-  },
-  {
-    region: "Western Province",
-    riskTrend: "Moderating",
-    primaryDriver: "Education decline",
-    secondaryDriver: "Economic stress",
-    confidence: "High",
-  },
-];
+import { useEffect, useState } from "react";
+
+import { apiClient } from "@/lib/api-client";
+
+type RegionRow = {
+  region: string;
+  stabilityIndex: number;
+  trend: string;
+  primaryDriver: string;
+  confidence: string;
+};
 
 export default function PressureZonesTable() {
+  const [rows, setRows] = useState<RegionRow[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      try {
+        const response = await apiClient.getRegionalData();
+        if (!active) {
+          return;
+        }
+        const sorted = [...response.data].sort((left, right) => left.stabilityIndex - right.stabilityIndex);
+        setRows(sorted.slice(0, 6));
+      } catch (loadError) {
+        if (!active) {
+          return;
+        }
+        setError(loadError instanceof Error ? loadError.message : "Unable to load pressure zones");
+      }
+    }
+
+    void load();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (error) {
+    return <div className="px-6 text-[13px] text-[#991B1B]">{error}</div>;
+  }
+
   return (
     <div className="overflow-x-auto -mx-6 px-6">
       <table className="w-full min-w-[640px]">
         <thead>
           <tr className="border-b border-[#E5E7EB]">
-            <th className="text-left py-3 px-4 text-[13px] font-medium text-[#6B7280]">
-              Region
-            </th>
-            <th className="text-left py-3 px-4 text-[13px] font-medium text-[#6B7280]">
-              Risk Trend
-            </th>
-            <th className="text-left py-3 px-4 text-[13px] font-medium text-[#6B7280]">
-              Primary Driver
-            </th>
-            <th className="text-left py-3 px-4 text-[13px] font-medium text-[#6B7280]">
-              Secondary Driver
-            </th>
-            <th className="text-left py-3 px-4 text-[13px] font-medium text-[#6B7280]">
-              Confidence
-            </th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Region</th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Stability Index</th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Trend</th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Primary Driver</th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Confidence</th>
           </tr>
         </thead>
         <tbody>
-          {mockData.map((zone, index) => (
+          {(rows.length ? rows : placeholderRows).map((zone) => (
             <tr
-              key={index}
-              className="border-b border-[#E5E7EB] last:border-0 hover:bg-[#F9FAFB] transition-colors duration-150"
+              key={zone.region}
+              className="border-b border-[#E5E7EB] last:border-0 transition-colors duration-150 hover:bg-[#F9FAFB]"
             >
-              <td className="py-3 px-4 text-[15px] text-[#111111]">
-                {zone.region}
-              </td>
-              <td className="py-3 px-4 text-[15px] text-[#111111]">
-                {zone.riskTrend}
-              </td>
-              <td className="py-3 px-4 text-[15px] text-[#6B7280]">
-                {zone.primaryDriver}
-              </td>
-              <td className="py-3 px-4 text-[15px] text-[#6B7280]">
-                {zone.secondaryDriver}
-              </td>
-              <td className="py-3 px-4 text-[15px] text-[#111111]">
-                {zone.confidence}
-              </td>
+              <td className="px-4 py-3 text-[15px] text-[#111111]">{zone.region}</td>
+              <td className="px-4 py-3 text-[15px] text-[#111111]">{zone.stabilityIndex}</td>
+              <td className="px-4 py-3 text-[15px] text-[#111111]">{zone.trend}</td>
+              <td className="px-4 py-3 text-[15px] text-[#6B7280]">{zone.primaryDriver}</td>
+              <td className="px-4 py-3 text-[15px] text-[#111111]">{zone.confidence}</td>
             </tr>
           ))}
         </tbody>
@@ -81,3 +75,13 @@ export default function PressureZonesTable() {
     </div>
   );
 }
+
+const placeholderRows: RegionRow[] = [
+  {
+    region: "Loading regions",
+    stabilityIndex: 0,
+    trend: "Pending",
+    primaryDriver: "Pending",
+    confidence: "Pending",
+  },
+];

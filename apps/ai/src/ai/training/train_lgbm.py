@@ -17,6 +17,7 @@ ARTIFACTS_DIR = ROOT / "data" / "artifacts"
 
 
 def build_baseline_training_dataset() -> None:
+    # TODO: Replace this statistical baseline with the real LightGBM training pipeline and model registry.
     _ensure_source_tables()
 
     features = _read_indexed(PROCESSED_DIR / "rainfall_features_monthly_national.csv")
@@ -153,6 +154,7 @@ def _write_model_artifact(rows: list[dict[str, object]], low_cut: float, high_cu
     if not rows:
         raise ValueError("No training rows were produced; cannot train baseline artifact.")
 
+    # TODO: Persist richer artifact metadata, validation metrics, and calibration outputs.
     feature_names = [
         "rfh_mean",
         "rfh_avg_mean",

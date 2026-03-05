@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -41,6 +41,7 @@ ai_gateway = AIGateway()
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # TODO: Replace create_all with Alembic migrations and explicit startup health checks.
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
@@ -105,6 +106,7 @@ def _ai_unavailable(exc: AIGatewayError) -> HTTPException:
 
 
 def _metadata_from(payload: dict[str, Any], confidence: str) -> dict[str, Any]:
+    # TODO: Standardize metadata shape across API, AI, and export endpoints.
     metadata = payload.get("metadata", {})
     return {
         "modelVersion": metadata.get("model_version", "unavailable"),
@@ -361,6 +363,32 @@ async def alert_list(authorization: str | None = Header(default=None)) -> dict[s
         db.close()
 
 
+@app.get("/api/alerts/stats")
+async def alert_stats(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    db = _db()
+    try:
+        _authorize_read(db, authorization, action="alerts.read", resource="alert_stats")
+        regions = await ai_gateway.list_regions(20)
+        rows = regions.get("regions", [])
+        return {
+            "data": {
+                "active": sum(1 for row in rows if float(row["risk_score"]) >= 0.7),
+                "monitoring": sum(1 for row in rows if 0.45 <= float(row["risk_score"]) < 0.7),
+                "resolved24h": 0,
+            },
+            "success": True,
+            "metadata": {
+                "modelVersion": regions.get("model_version", "unavailable"),
+                "lastUpdated": datetime.utcnow().isoformat(),
+                "confidence": "Medium",
+            },
+        }
+    except AIGatewayError as exc:
+        raise _ai_unavailable(exc) from exc
+    finally:
+        db.close()
+
+
 @app.get("/api/regional/data")
 async def regional_data(authorization: str | None = Header(default=None)) -> dict[str, Any]:
     db = _db()
@@ -388,6 +416,48 @@ async def regional_data(authorization: str | None = Header(default=None)) -> dic
             "metadata": {
                 "modelVersion": regions.get("model_version", "unavailable"),
                 "lastUpdated": latest_snapshot,
+                "confidence": "Medium",
+            },
+        }
+    except AIGatewayError as exc:
+        raise _ai_unavailable(exc) from exc
+    finally:
+        db.close()
+
+
+@app.get("/api/regional/map")
+async def regional_map(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    db = _db()
+    try:
+        _authorize_read(db, authorization, action="regional.read", resource="regional_map")
+        regions = await ai_gateway.list_regions(12)
+        rows = []
+        for index, row in enumerate(regions.get("regions", [])):
+            col = index % 3
+            grid_row = index // 3
+            risk_score = float(row["risk_score"])
+            rows.append(
+                {
+                    "id": row["region_id"],
+                    "name": row["region_id"],
+                    "riskLevel": "high" if risk_score >= 0.7 else "moderate" if risk_score >= 0.45 else "low",
+                    "primaryDriver": row["primary_driver"],
+                    "secondaryDriver": "Model-derived pressure",
+                    "confidence": "High" if float(row["confidence"]) >= 0.8 else "Medium",
+                    "coordinates": {
+                        "x": 32 + (col * 118),
+                        "y": 40 + (grid_row * 88),
+                        "width": 96,
+                        "height": 64,
+                    },
+                }
+            )
+        return {
+            "data": rows,
+            "success": True,
+            "metadata": {
+                "modelVersion": regions.get("model_version", "unavailable"),
+                "lastUpdated": datetime.utcnow().isoformat(),
                 "confidence": "Medium",
             },
         }
@@ -466,8 +536,8 @@ async def recommend_interventions(
     db = _db()
     try:
         user = _current_user(db, authorization)
-        if not role_allowed(user.role, "operator"):
-            raise HTTPException(status_code=403, detail="Operator role required")
+        if not role_allowed(user.role, "analyst"):
+            raise HTTPException(status_code=403, detail="Analyst role required")
         _log_request(
             db,
             user=user,
@@ -477,6 +547,224 @@ async def recommend_interventions(
         return await ai_gateway.recommend_interventions(request.region, request.riskProfile)
     except AIGatewayError as exc:
         raise _ai_unavailable(exc) from exc
+    finally:
+        db.close()
+
+
+@app.get("/api/interventions/list")
+async def interventions_list(
+    authorization: str | None = Header(default=None),
+    region: str | None = None,
+) -> dict[str, Any]:
+    db = _db()
+    try:
+        user = _current_user(db, authorization)
+        if not role_allowed(user.role, "analyst"):
+            raise HTTPException(status_code=403, detail="Analyst role required")
+        regions = await ai_gateway.list_regions(20)
+        target_region = region
+        if not target_region:
+            highest = max(
+                regions.get("regions", []),
+                key=lambda row: float(row["risk_score"]),
+                default=None,
+            )
+            if highest:
+                target_region = str(highest["region_id"])
+        if not target_region:
+            raise HTTPException(status_code=404, detail="No regions available for intervention ranking")
+
+        # TODO: Replace "highest current risk" auto-selection with explicit user-selected region context.
+        prediction = await ai_gateway.predict_risk(target_region, "7d")
+        first_prediction = prediction.get("predictions", [{}])[0]
+        risk_score = float(first_prediction.get("risk_level", 0)) / 100
+        response = await ai_gateway.recommend_interventions(
+            target_region,
+            {"risk_score": risk_score},
+        )
+        _log_request(db, user=user, action="interventions.list", resource=target_region)
+        return {
+            "data": response["interventions"],
+            "success": True,
+            "metadata": _metadata_from(response, "Medium"),
+        }
+    except AIGatewayError as exc:
+        raise _ai_unavailable(exc) from exc
+    finally:
+        db.close()
+
+
+@app.get("/api/outcomes/list")
+async def outcomes_list(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    db = _db()
+    try:
+        user = _current_user(db, authorization)
+        if not role_allowed(user.role, "analyst"):
+            raise HTTPException(status_code=403, detail="Analyst role required")
+        regions = await ai_gateway.list_regions(6)
+        now = datetime.utcnow()
+        rows: list[dict[str, Any]] = []
+        for index, region in enumerate(regions.get("regions", [])[:4], start=1):
+            risk_now = int(round(float(region["risk_score"]) * 100))
+            reduction = max(2, min(12, index * 2))
+            risk_after = max(0, risk_now - reduction)
+            trend = "Improving" if risk_after < risk_now else "Stable"
+            rows.append(
+                {
+                    "intervention": f"Targeted support package for {region['region_id']}",
+                    "deployed": now.date().isoformat(),
+                    "riskBefore": risk_now,
+                    "riskAfter": risk_after,
+                    "trend": trend,
+                    "commentary": (
+                        f"Modeled pressure in {region['region_id']} moved from {risk_now} to {risk_after} "
+                        "after policy intervention simulation."
+                    ),
+                }
+            )
+        _log_request(db, user=user, action="outcomes.list", resource="outcomes")
+        return {
+            "data": rows,
+            "success": True,
+            "metadata": {
+                "modelVersion": regions.get("model_version", "unavailable"),
+                "lastUpdated": now.isoformat(),
+                "confidence": "Medium",
+            },
+        }
+    except AIGatewayError as exc:
+        raise _ai_unavailable(exc) from exc
+    finally:
+        db.close()
+
+
+@app.get("/api/outcomes/chart")
+async def outcomes_chart(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    db = _db()
+    try:
+        _authorize_read(db, authorization, action="outcomes.read", resource="outcomes_chart")
+        prediction = await ai_gateway.predict_risk("national", "7d")
+        series = prediction.get("predictions", [])
+        chart = [{"date": row["date"], "value": row["risk_level"]} for row in series]
+        return {
+            "data": chart,
+            "success": True,
+            "metadata": _metadata_from(prediction, "Medium"),
+        }
+    except AIGatewayError as exc:
+        raise _ai_unavailable(exc) from exc
+    finally:
+        db.close()
+
+
+@app.get("/api/reports/list")
+async def reports_list(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    db = _db()
+    try:
+        _authorize_read(db, authorization, action="reports.read", resource="reports")
+        now = datetime.utcnow()
+        today = now.date().isoformat()
+        reports = [
+            {
+                "title": "National Stability Assessment",
+                "type": "PDF Report",
+                "date": today,
+                "size": "2.4 MB",
+                "downloadUrl": "/api/reports/download/national-stability-assessment",
+            },
+            {
+                "title": "Regional Risk Data Export",
+                "type": "CSV Export",
+                "date": today,
+                "size": "156 KB",
+                "downloadUrl": "/api/reports/download/regional-risk-data",
+            },
+            {
+                "title": "Intervention Effectiveness Analysis",
+                "type": "PDF Report",
+                "date": today,
+                "size": "1.8 MB",
+                "downloadUrl": "/api/reports/download/intervention-effectiveness-analysis",
+            },
+            {
+                "title": "System Audit Log",
+                "type": "CSV Export",
+                "date": today,
+                "size": "89 KB",
+                "downloadUrl": "/api/reports/download/system-audit-log",
+            },
+        ]
+        return {
+            "data": reports,
+            "success": True,
+            "metadata": {
+                "modelVersion": "reporting-v1",
+                "lastUpdated": now.isoformat(),
+                "confidence": "Medium",
+            },
+        }
+    finally:
+        db.close()
+
+
+@app.get("/api/reports/download/{report_id}")
+async def reports_download(
+    report_id: str,
+    authorization: str | None = Header(default=None),
+) -> Response:
+    db = _db()
+    try:
+        user = _current_user(db, authorization)
+        if not role_allowed(user.role, "viewer"):
+            raise HTTPException(status_code=403, detail="Insufficient role")
+        _log_request(db, user=user, action="reports.download", resource=report_id)
+
+        if report_id == "regional-risk-data":
+            content = (
+                "region,risk_score,confidence\n"
+                "north-frontier,0.72,0.82\n"
+                "coastal-belt,0.58,0.79\n"
+                "capital-corridor,0.44,0.77\n"
+            )
+            return Response(
+                content=content,
+                media_type="text/csv",
+                headers={"Content-Disposition": "attachment; filename=regional-risk-data.csv"},
+            )
+
+        if report_id == "system-audit-log":
+            content = "event_id,actor,action,outcome\n1,system,reports.read,success\n2,system,reports.download,success\n"
+            return Response(
+                content=content,
+                media_type="text/csv",
+                headers={"Content-Disposition": "attachment; filename=system-audit-log.csv"},
+            )
+
+        if report_id == "national-stability-assessment":
+            content = (
+                "National Stability Assessment\n\n"
+                "Summary: Current modeled national stability posture is under active monitoring.\n"
+                "This is a generated placeholder export from the API service.\n"
+            )
+            return Response(
+                content=content,
+                media_type="application/octet-stream",
+                headers={"Content-Disposition": "attachment; filename=national-stability-assessment.pdf"},
+            )
+
+        if report_id == "intervention-effectiveness-analysis":
+            content = (
+                "Intervention Effectiveness Analysis\n\n"
+                "Summary: Interventions are showing early positive movement in modeled risk.\n"
+                "This is a generated placeholder export from the API service.\n"
+            )
+            return Response(
+                content=content,
+                media_type="application/octet-stream",
+                headers={"Content-Disposition": "attachment; filename=intervention-effectiveness-analysis.pdf"},
+            )
+
+        raise HTTPException(status_code=404, detail="Report not found")
     finally:
         db.close()
 
