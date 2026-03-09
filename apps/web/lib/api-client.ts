@@ -196,13 +196,23 @@ class ApiClient {
 
   // Reports
   async getReports() {
-    return this.request<Array<{
+    const response = await this.request<Array<{
       title: string;
       type: string;
       date: string;
       size: string;
       downloadUrl: string;
     }>>('/reports/list');
+
+    return {
+      ...response,
+      data: response.data.map((report) => ({
+        ...report,
+        downloadUrl: report.downloadUrl.startsWith('http')
+          ? report.downloadUrl
+          : `${API_ROOT_URL}${report.downloadUrl}`,
+      })),
+    };
   }
 
   // AI Engine Integration

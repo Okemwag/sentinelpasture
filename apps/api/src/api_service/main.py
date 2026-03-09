@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from datetime import datetime
+import logging
 from typing import Any
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +16,9 @@ from .ai import AIGateway, AIGatewayError
 from .audit import list_audit_events, log_audit_event
 from .auth import AuthService, role_allowed
 from .db import Base, SessionLocal, engine
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logger = logging.getLogger("api_service.main")
 
 
 class ProcessSignalsRequest(BaseModel):
@@ -48,6 +52,11 @@ async def lifespan(_: FastAPI):
         auth_service.seed_defaults(db)
     finally:
         db.close()
+    logger.info(
+        "api startup complete ai_inference_url=%s fallback_to_mock=%s",
+        ai_gateway.base_url or "unconfigured",
+        ai_gateway.fallback_to_mock,
+    )
     yield
 
 

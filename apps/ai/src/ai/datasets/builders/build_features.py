@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, Tuple
@@ -12,10 +13,12 @@ ROOT = Path(__file__).resolve().parents[4]
 RAW_DIR = ROOT / "data" / "raw"
 PROCESSED_DIR = ROOT / "data" / "processed"
 RAW_FILE = RAW_DIR / "ken-rainfall-subnat-full.csv"
+logger = logging.getLogger("ai.datasets.builders.features")
 
 
 def build_monthly_features() -> None:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    logger.info("building monthly rainfall features from %s", RAW_FILE)
 
     national: Dict[Tuple[int, int], dict] = defaultdict(_empty_bucket)
     subnational: Dict[Tuple[int, int, str, str, str], dict] = defaultdict(_empty_bucket)
@@ -40,6 +43,11 @@ def build_monthly_features() -> None:
 
     _write_national(national)
     _write_subnational(subnational)
+    logger.info(
+        "monthly rainfall features ready national_periods=%d subnational_region_periods=%d",
+        len(national),
+        len(subnational),
+    )
 
 
 def _empty_bucket() -> dict:
@@ -169,4 +177,7 @@ def _write_subnational(rows: Dict[Tuple[int, int, str, str, str], dict]) -> None
 
 
 if __name__ == "__main__":
+    from ai.common.logging import configure_logging
+
+    configure_logging("ai.datasets.builders.features")
     build_monthly_features()

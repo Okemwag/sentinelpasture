@@ -12,6 +12,8 @@ Responsibilities:
 
 Current status:
 
-- this directory now contains a minimal Python ingestion service scaffold,
-- it exposes a health endpoint and pipeline description,
-- collector and persistence implementations still need to be filled in.
+- this service now exposes:
+  - `GET /health`
+  - `GET /pipeline` (declared stages)
+  - `POST /pipeline/run` (runnable orchestration for feature/label build and training artifact generation),
+- collectors and persistence backends are still lightweight stubs around the current file-based AI data flow.

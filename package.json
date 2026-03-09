@@ -14,6 +14,8 @@
     "typecheck:web": "./node_modules/.bin/tsc --noEmit -p apps/web/tsconfig.json",
     "backend": "./scripts/start-backend.sh",
     "ai": "./scripts/start-ai.sh",
+    "ingestion": "./scripts/start-ingestion.sh",
+    "scheduler": "./scripts/start-scheduler.sh",
     "dev:all": "npm run dev:web"
   }
 }

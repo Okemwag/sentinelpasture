@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import calendar
 import csv
+import logging
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[4]
 RAW_DIR = ROOT / "data" / "raw"
 PROCESSED_DIR = ROOT / "data" / "processed"
+logger = logging.getLogger("ai.datasets.builders.labels")
 
 
 LABEL_FILES = {
@@ -21,9 +23,11 @@ LABEL_FILES = {
 
 def build_monthly_labels() -> None:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    logger.info("building monthly event labels from %d source files", len(LABEL_FILES))
 
     rows: dict[tuple[int, int], dict] = {}
     for label_name, path in LABEL_FILES.items():
+        logger.info("loading label source %s from %s", label_name, path)
         with path.open(newline="", encoding="utf-8") as handle:
             reader = csv.DictReader(handle)
             for row in reader:
@@ -97,7 +101,11 @@ def build_monthly_labels() -> None:
                     total_fatalities,
                 ]
             )
+    logger.info("monthly event labels ready periods=%d output=%s", len(rows), output)
 
 
 if __name__ == "__main__":
+    from ai.common.logging import configure_logging
+
+    configure_logging("ai.datasets.builders.labels")
     build_monthly_labels()

@@ -12,6 +12,8 @@ Responsibilities:
 
 Current status:
 
-- this directory now contains a minimal Python service scaffold,
-- it exposes a health endpoint and registered job list,
-- the next step is wiring the scheduler to ingestion, API, and AI service calls.
+- this service now exposes:
+  - `GET /health`
+  - `GET /jobs` (registered plan)
+  - `POST /jobs/run/{job_name}` (executes job orchestration),
+- scheduler clients now trigger ingestion pipeline runs and AI region scoring over HTTP.

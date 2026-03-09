@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import time
 from dataclasses import dataclass
@@ -16,6 +17,9 @@ class AIGatewayError(RuntimeError):
     pass
 
 
+logger = logging.getLogger("api_service.ai_gateway")
+
+
 @dataclass
 class AIGateway:
     base_url: str = ""
@@ -23,7 +27,7 @@ class AIGateway:
     fallback_to_mock: bool = True
 
     def __post_init__(self) -> None:
-        configured_url = self.base_url or os.getenv("AI_INFERENCE_URL", "").strip()
+        configured_url = self.base_url or os.getenv("AI_INFERENCE_URL", "http://localhost:8100").strip()
         self.base_url = configured_url.rstrip("/") if configured_url else ""
         self.fallback_to_mock = os.getenv("AI_FALLBACK_TO_MOCK", "true").strip().lower() not in {"0", "false", "no"}
 
@@ -38,9 +42,11 @@ class AIGateway:
         return "mock_ai_service" if self.fallback_to_mock else "unconfigured_ai_service"
 
     async def process_signals(self, signals: list[dict[str, Any]]) -> dict[str, Any]:
+        logger.info("process_signals called", extra={"signal_count": len(signals), "remote_enabled": self.remote_enabled})
         if not self.remote_enabled:
             if not self.fallback_to_mock:
                 self._require_remote()
+            logger.info("process_signals using mock fallback (remote disabled)")
             return self._mock_process_signals(signals)
         try:
             started_at = time.perf_counter()
@@ -91,12 +97,15 @@ class AIGateway:
         except AIGatewayError:
             if not self.fallback_to_mock:
                 raise
+            logger.warning("process_signals remote call failed; using mock fallback")
             return self._mock_process_signals(signals)
 
     async def predict_risk(self, region: str, timeframe: str) -> dict[str, Any]:
+        logger.info("predict_risk called", extra={"region": region, "timeframe": timeframe, "remote_enabled": self.remote_enabled})
         if not self.remote_enabled:
             if not self.fallback_to_mock:
                 self._require_remote()
+            logger.info("predict_risk using mock fallback (remote disabled)", extra={"region": region})
             return self._mock_predict_risk(region, timeframe)
         try:
             risk = await self._post_json(
@@ -128,12 +137,15 @@ class AIGateway:
         except AIGatewayError:
             if not self.fallback_to_mock:
                 raise
+            logger.warning("predict_risk remote call failed; using mock fallback", extra={"region": region})
             return self._mock_predict_risk(region, timeframe)
 
     async def analyze_drivers(self, payload: dict[str, Any]) -> dict[str, Any]:
+        logger.info("analyze_drivers called", extra={"region": payload.get("region_id", "national"), "remote_enabled": self.remote_enabled})
         if not self.remote_enabled:
             if not self.fallback_to_mock:
                 self._require_remote()
+            logger.info("analyze_drivers using mock fallback (remote disabled)")
             return self._mock_driver_analysis(payload)
         try:
             explain = await self._post_json(
@@ -171,12 +183,15 @@ class AIGateway:
         except AIGatewayError:
             if not self.fallback_to_mock:
                 raise
+            logger.warning("analyze_drivers remote call failed; using mock fallback")
             return self._mock_driver_analysis(payload)
 
     async def recommend_interventions(self, region: str, risk_profile: dict[str, Any]) -> dict[str, Any]:
+        logger.info("recommend_interventions called", extra={"region": region, "remote_enabled": self.remote_enabled})
         if not self.remote_enabled:
             if not self.fallback_to_mock:
                 self._require_remote()
+            logger.info("recommend_interventions using mock fallback (remote disabled)", extra={"region": region})
             return self._mock_interventions(region, risk_profile)
         try:
             risk_score = float(risk_profile.get("risk_score", risk_profile.get("threat_level", 0) / 100))
@@ -206,18 +221,22 @@ class AIGateway:
         except AIGatewayError:
             if not self.fallback_to_mock:
                 raise
+            logger.warning("recommend_interventions remote call failed; using mock fallback", extra={"region": region})
             return self._mock_interventions(region, risk_profile)
 
     async def list_regions(self, limit: int = 50) -> dict[str, Any]:
+        logger.info("list_regions called", extra={"limit": limit, "remote_enabled": self.remote_enabled})
         if not self.remote_enabled:
             if not self.fallback_to_mock:
                 self._require_remote()
+            logger.info("list_regions using mock fallback (remote disabled)")
             return self._mock_regions(limit)
         try:
             return await self._get_json("/infer/regions", {"limit": limit})
         except AIGatewayError:
             if not self.fallback_to_mock:
                 raise
+            logger.warning("list_regions remote call failed; using mock fallback")
             return self._mock_regions(limit)
 
     async def _post_json(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:

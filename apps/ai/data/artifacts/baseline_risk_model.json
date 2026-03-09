@@ -1,0 +1,57 @@
+{
+  "model_version": "baseline-risk-model-v1",
+  "trained_at": "2026-03-09T10:09:08.392085+00:00",
+  "feature_names": [
+    "rfh_mean",
+    "rfh_avg_mean",
+    "rfh_anomaly",
+    "r1h_mean",
+    "r3h_mean",
+    "rfq_mean"
+  ],
+  "feature_min": {
+    "rfh_mean": 2.8722,
+    "rfh_avg_mean": 13.7901,
+    "rfh_anomaly": -27.615,
+    "r1h_mean": 13.3297,
+    "r3h_mean": 78.2081,
+    "rfq_mean": 40.351
+  },
+  "feature_max": {
+    "rfh_mean": 111.3396,
+    "rfh_avg_mean": 61.9097,
+    "rfh_anomaly": 52.4634,
+    "r1h_mean": 279.5224,
+    "r3h_mean": 715.1028,
+    "rfq_mean": 273.2106
+  },
+  "feature_mean": {
+    "rfh_mean": 32.803257,
+    "rfh_avg_mean": 30.891105,
+    "rfh_anomaly": 1.912152,
+    "r1h_mean": 98.295848,
+    "r3h_mean": 295.061017,
+    "rfq_mean": 104.317526
+  },
+  "feature_weights": {
+    "rfh_mean": 0.072356,
+    "rfh_avg_mean": 0.112401,
+    "rfh_anomaly": 0.233716,
+    "r1h_mean": 0.091388,
+    "r3h_mean": 0.283613,
+    "rfq_mean": 0.206525
+  },
+  "target_bounds": {
+    "min": 2.2,
+    "max": 523.0
+  },
+  "band_thresholds": {
+    "moderate": 23.5,
+    "high": 61.0
+  },
+  "training_rows": 350,
+  "source_period": {
+    "start": "1997-01",
+    "end": "2026-02"
+  }
+}

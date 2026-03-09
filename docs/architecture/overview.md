@@ -5,6 +5,9 @@ The platform is a governance early-warning and coordination system.
 Its purpose is to detect emerging instability before it becomes an acute crisis,
 then help decision-makers choose proportional, auditable interventions.
 
+For the implementation that is live on this branch today, see
+[`current-state-end-to-end.md`](current-state-end-to-end.md).
+
 ## Core Product Loops
 
 1. Ingest weak signals across domains.

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import csv
 import json
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 
+from ai.bootstrap.demo_data import generate_synthetic_raw_data, missing_raw_files
 from ai.datasets.builders.build_features import build_monthly_features
 from ai.datasets.builders.build_labels import build_monthly_labels
 
@@ -14,10 +16,12 @@ from ai.datasets.builders.build_labels import build_monthly_labels
 ROOT = Path(__file__).resolve().parents[3]
 PROCESSED_DIR = ROOT / "data" / "processed"
 ARTIFACTS_DIR = ROOT / "data" / "artifacts"
+logger = logging.getLogger("ai.training.train_lgbm")
 
 
 def build_baseline_training_dataset() -> None:
     # TODO: Replace this statistical baseline with the real LightGBM training pipeline and model registry.
+    logger.info("starting baseline training dataset build")
     _ensure_source_tables()
 
     features = _read_indexed(PROCESSED_DIR / "rainfall_features_monthly_national.csv")
@@ -104,12 +108,26 @@ def build_baseline_training_dataset() -> None:
         json.dump(summary, handle, indent=2)
 
     _write_model_artifact(merged_rows, low_cut, high_cut)
+    logger.info(
+        "baseline training artifact ready rows=%d output_csv=%s artifact=%s",
+        len(merged_rows),
+        output_csv,
+        ARTIFACTS_DIR / "baseline_risk_model.json",
+    )
 
 
 def _ensure_source_tables() -> None:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    missing_raw = missing_raw_files()
+    if missing_raw:
+        logger.warning(
+            "missing raw training inputs detected; generating synthetic demo data: %s",
+            ", ".join(missing_raw),
+        )
+        generate_synthetic_raw_data()
     if not (PROCESSED_DIR / "rainfall_features_monthly_national.csv").exists():
         try:
+            logger.info("rainfall features missing; building from raw inputs")
             build_monthly_features()
         except FileNotFoundError as exc:
             raise FileNotFoundError(
@@ -118,6 +136,7 @@ def _ensure_source_tables() -> None:
             ) from exc
     if not (PROCESSED_DIR / "event_labels_monthly_national.csv").exists():
         try:
+            logger.info("event labels missing; building from raw inputs")
             build_monthly_labels()
         except FileNotFoundError as exc:
             raise FileNotFoundError(
@@ -222,4 +241,7 @@ def _signed_correlation(left: list[float], right: list[float]) -> float:
 
 
 if __name__ == "__main__":
+    from ai.common.logging import configure_logging
+
+    configure_logging("ai.training.train_lgbm")
     build_baseline_training_dataset()

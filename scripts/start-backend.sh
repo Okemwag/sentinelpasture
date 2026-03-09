@@ -27,8 +27,11 @@ fi
 source .venv/bin/activate
 pip install -e . >/dev/null
 
+export AI_INFERENCE_URL="${AI_INFERENCE_URL:-http://localhost:8100}"
+
 echo "Starting Python API server on http://localhost:8000"
 echo "HTTP endpoints are served from apps/api"
+echo "AI inference upstream: ${AI_INFERENCE_URL}"
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""
