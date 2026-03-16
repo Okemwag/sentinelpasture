@@ -4,7 +4,7 @@ import DashboardSidebar from "@/components/dashboard/sidebar";
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-inter",
 });
 
@@ -21,12 +21,10 @@ export default function DashboardLayout({
   return (
     <div className={`${inter.variable} font-sans`}>
       <AuthGate>
-        <div className="flex min-h-screen bg-[#FAFAFA]">
+        <div className="flex min-h-screen bg-[#F7F7F5]">
           <DashboardSidebar />
-          <main className="flex-1 lg:ml-64 w-full">
-            <div className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
-              {children}
-            </div>
+          <main className="flex-1 lg:ml-64 w-full min-w-0 overflow-hidden">
+            {children}
           </main>
         </div>
       </AuthGate>
