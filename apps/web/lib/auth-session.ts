@@ -54,7 +54,7 @@ export function clearAuthSession() {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
-export function authHeader() {
+export function authHeader(): Record<string, string> {
   const session = readAuthSession();
   return session ? { Authorization: `Bearer ${session.access_token}` } : {};
 }

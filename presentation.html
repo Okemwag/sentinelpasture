@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Governance Intel Platform — Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #070b0f;
+    --bg2: #0c1117;
+    --border: #1a2230;
+    --cyan: #00e5ff;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --purple: #a855f7;
+    --amber: #f59e0b;
+    --orange: #f97316;
+    --red: #ef4444;
+    --indigo: #6366f1;
+    --gray: #6b7280;
+    --text: #e2e8f0;
+    --dim: #4b5563;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: #040608;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+  .header-title {
+    color: var(--cyan);
+    font-size: 13px;
+    letter-spacing: 3px;
+    font-weight: 700;
+  }
+  .header-sub {
+    color: var(--dim);
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    background: var(--bg2);
+  }
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--dim);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    padding: 11px 20px;
+    transition: color .2s, border-color .2s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+  /* PANELS */
+  .panel { display: none; padding: 28px; animation: fadeIn .25s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* SECTION LABEL */
+  .section-label {
+    color: var(--cyan);
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    opacity: .55;
+    margin-bottom: 22px;
+  }
+  .sub-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    margin-top: 18px;
+  }
+
+  /* NODE CARD */
+  .node {
+    border-radius: 7px;
+    padding: 10px 14px;
+    font-size: 10px;
+    position: relative;
+  }
+  .node-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .8px;
+    margin-bottom: 2px;
+  }
+  .node-sub {
+    font-size: 8.5px;
+    opacity: .6;
+    margin-bottom: 5px;
+  }
+  .node-line {
+    font-size: 8.5px;
+    opacity: .85;
+    margin-top: 2px;
+  }
+  .node-line::before { content: '• '; }
+
+  /* ARROWS */
+  .arrow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin: 2px 0;
+  }
+  .arrow-label {
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: .5px;
+    margin-bottom: 2px;
+  }
+  .arrow-line {
+    width: 2px;
+    height: 22px;
+  }
+  .arrow-head {
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+  }
+
+  .arrow-h {
+    display: flex;
+    align-items: center;
+    margin: 0 6px;
+    min-width: 50px;
+  }
+  .arrow-h-line {
+    flex: 1;
+    height: 2px;
+  }
+  .arrow-h-head-r {
+    width: 0; height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+  }
+
+  /* FLOW ROW */
+  .flow-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .flow-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* BADGE */
+  .badge {
+    border-radius: 3px;
+    font-size: 8px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    letter-spacing: .5px;
+    font-weight: 700;
+  }
+
+  /* STEP LIST */
+  .step {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    align-items: flex-start;
+  }
+  .step-num { color: var(--dim); font-size: 10px; min-width: 18px; padding-top: 1px; }
+  .step-bar { width: 3px; border-radius: 2px; align-self: stretch; min-height: 34px; opacity: .65; }
+  .step-actor { font-size: 10px; font-weight: 700; }
+  .step-action { font-size: 11px; color: var(--text); }
+  .step-detail { font-size: 9px; color: var(--dim); }
+
+  /* ROLE CARD */
+  .role-card {
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+  }
+  .role-title { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+  .role-perm { font-size: 9px; color: #9ca3af; }
+  .role-perm::before { content: '→ '; }
+
+  /* ENDPOINT ROW */
+  .ep {
+    border-radius: 6px;
+    padding: 6px 11px;
+    margin-bottom: 5px;
+  }
+  .ep-name { font-size: 10px; font-weight: 700; }
+  .ep-desc { font-size: 9px; opacity: .75; }
+
+  /* PIPELINE STAGE */
+  .stage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 10px;
+  }
+  .stage-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* SCORING STEP */
+  .score-step {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .score-n { color: var(--dim); font-size: 9px; min-width: 16px; }
+  .score-title { font-size: 10px; }
+  .score-desc { font-size: 9px; color: var(--dim); }
+
+  /* LEGEND */
+  .legend {
+    border-top: 1px solid var(--border);
+    padding: 12px 28px;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    background: var(--bg2);
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+  .legend-label { font-size: 9px; color: var(--dim); }
+
+  /* GRID HELPERS */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  @media (max-width: 768px) {
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .flow-row { flex-direction: column; align-items: center; }
+    .arrow-h { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-dot"></div>
+  <div class="header-title">GOVERNANCE INTEL PLATFORM</div>
+  <div class="header-sub">/ ARCHITECTURE REFERENCE</div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab(0)">SYSTEM OVERVIEW</button>
+  <button class="tab" onclick="showTab(1)">AUTH FLOW</button>
+  <button class="tab" onclick="showTab(2)">AI &amp; INGESTION</button>
+  <button class="tab" onclick="showTab(3)">DATA PIPELINE</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- TAB 0: SYSTEM OVERVIEW                              -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="panel active" id="panel-0">
+  <div class="section-label">// SYSTEM ARCHITECTURE — END TO END</div>
+
+  <!-- Row 1: User → Frontend → API -->
+  <div class="flow-row" style="align-items:flex-start">
+
+    <!-- User -->
+    <div class="flow-col">
+      <div class="node" style="background:#0f2027;border:1.5px solid var(--cyan);box-shadow:0 0 14px #00e5ff18;width:150px">
+        <div class="node-title" style="color:var(--cyan)">ANALYST / USER</div>
+        <div class="node-sub">Web + Mobile</div>
+        <div class="node-line">Dashboard access</div>
+        <div class="node-line">Report download</div>
+        <div class="node-line">Intervention review</div>
+      </div>
+      <div class="arrow-v">
+        <div class="arrow-label" style="color:var(--cyan)">HTTP</div>
+        <div class="arrow-line" style="background:var(--cyan);opacity:.5"></div>
+        <div class="arrow-head" style="border-top:7px solid var(--cyan);opacity:.5"></div>
+      </div>
+    </div>
+
+    <!-- H arrow 1 -->
+    <div class="arrow-h" style="margin-top:30px">
+      <div class="arrow-h-line" style="background:var(--blue);opacity:.5"></div>
+      <div class="arrow-h-head-r" style="border-left:7px solid var(--blue);opacity:.5"></div>
+    </div>
+
+    <!-- Frontend -->
+    <div class="flow-col">
+      <div class="node" style="background:#0a1628;border:1.5px solid var(--blue);box-shadow:0 0 14px #3b82f618;width:175px">
+        <div class="node-title" style="color:var(--blue)">FRONTEND</div>
+        <div class="node-sub">Next.js · :3000 · apps/web</div>
+        <div class="node-line">Sign-in + session</div>
+        <div class="node-line">Dashboard pages</div>
+        <div class="node-line">Risk map + reports</div>
+        <div class="node-line">Intervention review</div>
+      </div>
+      <div class="arrow-v">
+        <div class="arrow-label" style="color:var(--blue)">REST /api/*</div>
+        <div class="arrow-line" style="background:var(--blue);opacity:.5"></div>
+        <div class="arrow-head" style="border-top:7px solid var(--blue);opacity:.5"></div>
+      </div>
+    </div>
+
+    <!-- H arrow 2 -->
+    <div class="arrow-h" style="margin-top:30px">
+      <div class="arrow-h-line" style="background:var(--green);opacity:.5"></div>
+      <div class="arrow-h-head-r" style="border-left:7px solid var(--green);opacity:.5"></div>
+    </div>
+
+    <!-- API -->
+    <div class="flow-col">
+      <div class="node" style="background:#0d1f0d;border:1.5px solid var(--green);box-shadow:0 0 14px #22c55e18;width:185px">
+        <div class="node-title" style="color:var(--green)">BACKEND API</div>
+        <div class="node-sub">FastAPI · :8000 · apps/api</div>
+        <div class="node-line">/auth/login, /auth/me</div>
+        <div class="node-line">/dashboard/*, /reports/*</div>
+        <div class="node-line">/interventions/*</div>
+        <div class="node-line">AI gateway orchestration</div>
+        <div class="node-line">Audit trail writer</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: API branches -->
+  <div style="display:flex;justify-content:center;gap:32px;margin-top:4px;flex-wrap:wrap">
+
+    <!-- Auth branch -->
+    <div class="flow-col">
+      <div class="arrow-v">
+        <div class="arrow-label" style="color:var(--red)">validate JWT</div>
+        <div class="arrow-line" style="background:var(--red);opacity:.5"></div>
+        <div class="arrow-head" style="border-top:7px solid var(--red);opacity:.5"></div>
+      </div>
+      <div class="node" style="background:#1a0000;border:1.5px solid var(--red);box-shadow:0 0 14px #ef444418;width:160px">
+        <div class="node-title" style="color:var(--red)">AUTH SERVICE</div>
+        <div class="node-sub">RBAC</div>
+        <div class="node-line">JWT bearer validation</div>
+        <div class="node-line">viewer/analyst/operator/admin</div>
+        <div class="node-line">Role-gated routes</div>
+      </div>
+    </div>
+
+    <!-- Audit branch -->
+    <div class="flow-col">
+      <div class="arrow-v">
+        <div class="arrow-label" style="color:var(--indigo)">write record</div>
+        <div class="arrow-line" style="background:var(--indigo);opacity:.5"></div>
+        <div class="arrow-head" style="border-top:7px solid var(--indigo);opacity:.5"></div>
+      </div>
+      <div class="node" style="background:#111827;border:1.5px solid var(--indigo);box-shadow:0 0 14px #6366f118;width:165px">
+        <div class="node-title" style="color:var(--indigo)">AUDIT DB</div>
+        <div class="node-sub">SQLite: governance_intel.db</div>
+        <div class="node-line">action / resource / outcome</div>
+        <div class="node-line">Timestamped decisions</div>
+        <div class="node-line">Reviewable history</div>
+      </div>
+    </div>
+
+    <!-- AI Gateway branch -->
+    <div class="flow-col">
+      <div class="arrow-v">
+        <div class="arrow-label" style="color:var(--purple)">HTTP /infer/*</div>
+        <div class="arrow-line" style="background:var(--purple);opacity:.5"></div>
+        <div class="arrow-head" style="border-top:7px solid var(--purple);opacity:.5"></div>
+      </div>
+      <div class="node" style="background:#1a0a2e;border:1.5px solid var(--purple);box-shadow:0 0 14px #a855f718;width:170px">
+        <div class="node-title" style="color:var(--purple)">AI GATEWAY</div>
+        <div class="node-sub">AIGateway in apps/api</div>
+        <div class="node-line">Routes to AI service</div>
+        <div class="node-line">Mock fallback if unreachable</div>
+        <div class="node-line">Wraps /infer/* endpoints</div>
+      </div>
+      <div class="arrow-v">
+        <div class="arrow-label" style="color:var(--purple)">HTTP :8100</div>
+        <div class="arrow-line" style="background:var(--purple);opacity:.5"></div>
+        <div class="arrow-head" style="border-top:7px solid var(--purple);opacity:.5"></div>
+      </div>
+      <div class="node" style="background:#1a0a2e;border:1.5px solid var(--purple);box-shadow:0 0 14px #a855f718;width:170px">
+        <div class="node-title" style="color:var(--purple)">AI INFERENCE</div>
+        <div class="node-sub">FastAPI · :8100 · apps/ai</div>
+        <div class="node-line">/infer/risk</div>
+        <div class="node-line">/infer/explain</div>
+        <div class="node-line">/infer/interventions</div>
+        <div class="node-line">/infer/regions</div>
+      </div>
+      <div class="arrow-v">
+        <div class="arrow-label" style="color:var(--gray)">reads artifacts + features</div>
+        <div class="arrow-line" style="background:var(--gray);opacity:.4;border-left:2px dashed var(--gray);width:0"></div>
+        <div class="arrow-line" style="border-left:2px dashed var(--gray);width:0;height:22px"></div>
+        <div class="arrow-head" style="border-top:7px solid var(--gray);opacity:.4"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div class="node" style="background:#0f0f0f;border:1.5px solid var(--gray);width:130px">
+          <div class="node-title" style="color:var(--gray)">MODEL ARTIFACT</div>
+          <div class="node-sub">data/artifacts/</div>
+          <div class="node-line">baseline_risk_model.json</div>
+        </div>
+        <div class="node" style="background:#0f0f0f;border:1.5px solid var(--gray);width:130px">
+          <div class="node-title" style="color:var(--gray)">PROCESSED DATA</div>
+          <div class="node-sub">data/processed/</div>
+          <div class="node-line">Monthly CSV snapshots</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Ingestion + Scheduler -->
+  <div style="display:flex;gap:16px;justify-content:center;margin-top:24px;flex-wrap:wrap">
+    <div class="node" style="background:#1a1000;border:1.5px solid var(--amber);box-shadow:0 0 14px #f59e0b18;width:185px">
+      <div class="node-title" style="color:var(--amber)">INGESTION SERVICE</div>
+      <div class="node-sub">apps/ingestion · /pipeline</div>
+      <div class="node-line">Validates raw CSVs</div>
+      <div class="node-line">Calls AI feature/label builders</div>
+      <div class="node-line">Triggers baseline trainer</div>
+    </div>
+    <div class="node" style="background:#1a0a00;border:1.5px solid var(--orange);box-shadow:0 0 14px #f9731618;width:185px">
+      <div class="node-title" style="color:var(--orange)">SCHEDULER</div>
+      <div class="node-sub">apps/scheduler · /jobs</div>
+      <div class="node-line">Invokes ingestion over HTTP</div>
+      <div class="node-line">Jobs: scoring, training</div>
+      <div class="node-line">Automation facade</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- TAB 1: AUTH FLOW                                    -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="panel" id="panel-1">
+  <div class="section-label">// AUTH FLOW + RBAC MODEL</div>
+
+  <div class="two-col">
+    <!-- Sequence -->
+    <div>
+      <div class="sub-label" style="color:var(--gray)">REQUEST SEQUENCE</div>
+
+      <div id="steps"></div>
+    </div>
+
+    <!-- RBAC + Audit -->
+    <div>
+      <div class="sub-label" style="color:var(--gray)">ROLE PERMISSIONS</div>
+
+      <div class="role-card" style="background:#1a0000;border:1px solid #ef444433">
+        <div class="role-title" style="color:var(--red)">VIEWER</div>
+        <div class="role-perm">Read dashboard</div>
+        <div class="role-perm">View reports</div>
+      </div>
+      <div class="role-card" style="background:#0a1628;border:1px solid #3b82f633">
+        <div class="role-title" style="color:var(--blue)">ANALYST</div>
+        <div class="role-perm">All viewer permissions</div>
+        <div class="role-perm">Run inference</div>
+        <div class="role-perm">Export data</div>
+      </div>
+      <div class="role-card" style="background:#1a1000;border:1px solid #f59e0b33">
+        <div class="role-title" style="color:var(--amber)">OPERATOR</div>
+        <div class="role-perm">All analyst permissions</div>
+        <div class="role-perm">Trigger interventions</div>
+        <div class="role-perm">Pipeline run</div>
+      </div>
+      <div class="role-card" style="background:#0d1f0d;border:1px solid #22c55e33">
+        <div class="role-title" style="color:var(--green)">ADMIN</div>
+        <div class="role-perm">Full access</div>
+        <div class="role-perm">User management</div>
+        <div class="role-perm">Audit review</div>
+      </div>
+
+      <div class="sub-label" style="color:var(--gray);margin-top:20px">AUDIT RECORD FIELDS</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        <div style="font-size:9px;color:var(--dim)"><span style="color:var(--indigo)">■</span> user_id</div>
+        <div style="font-size:9px;color:var(--dim)"><span style="color:var(--indigo)">■</span> action</div>
+        <div style="font-size:9px;color:var(--dim)"><span style="color:var(--indigo)">■</span> resource</div>
+        <div style="font-size:9px;color:var(--dim)"><span style="color:var(--indigo)">■</span> outcome</div>
+        <div style="font-size:9px;color:var(--dim)"><span style="color:var(--indigo)">■</span> timestamp</div>
+        <div style="font-size:9px;color:var(--dim)"><span style="color:var(--indigo)">■</span> ip_address</div>
+      </div>
+
+      <div class="sub-label" style="color:var(--gray);margin-top:20px">JWT TOKEN PAYLOAD</div>
+      <div style="background:#0c1117;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:9px;line-height:1.8;color:var(--dim)">
+        {<br>
+        &nbsp;&nbsp;<span style="color:var(--cyan)">"sub"</span>: <span style="color:var(--green)">"user_id"</span>,<br>
+        &nbsp;&nbsp;<span style="color:var(--cyan)">"role"</span>: <span style="color:var(--green)">"analyst"</span>,<br>
+        &nbsp;&nbsp;<span style="color:var(--cyan)">"exp"</span>: <span style="color:var(--amber)">1712345678</span>,<br>
+        &nbsp;&nbsp;<span style="color:var(--cyan)">"iat"</span>: <span style="color:var(--amber)">1712342078</span><br>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- TAB 2: AI & INGESTION                               -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="panel" id="panel-2">
+  <div class="section-label">// AI INFERENCE + INGESTION ARCHITECTURE</div>
+
+  <div class="two-col">
+    <!-- AI Inference -->
+    <div>
+      <div class="sub-label" style="color:var(--purple)">AI INFERENCE SERVICE · :8100</div>
+
+      <div class="ep" style="background:#1a0a2e;border:1px solid #a855f733">
+        <div class="ep-name" style="color:var(--purple)">POST /infer/risk</div>
+        <div class="ep-desc" style="color:#d8b4fe">Returns region risk score + confidence band</div>
+      </div>
+      <div class="ep" style="background:#1a0a2e;border:1px solid #a855f733">
+        <div class="ep-name" style="color:var(--purple)">POST /infer/explain</div>
+        <div class="ep-desc" style="color:#d8b4fe">Top driver explanation + uncertainty notes</div>
+      </div>
+      <div class="ep" style="background:#1a0a2e;border:1px solid #a855f733">
+        <div class="ep-name" style="color:var(--purple)">POST /infer/interventions</div>
+        <div class="ep-desc" style="color:#d8b4fe">Rule-mapped interventions with constraints</div>
+      </div>
+      <div class="ep" style="background:#1a0a2e;border:1px solid #a855f733">
+        <div class="ep-name" style="color:var(--purple)">GET /infer/regions</div>
+        <div class="ep-desc" style="color:#d8b4fe">Available region list</div>
+      </div>
+
+      <div class="sub-label" style="color:var(--purple);margin-top:18px">SCORING PIPELINE</div>
+
+      <div class="score-step">
+        <div class="score-n">1.</div>
+        <div><div class="score-title" style="color:#d8b4fe">Feature Fetch</div><div class="score-desc">Read latest processed CSV snapshots</div></div>
+      </div>
+      <div class="score-step">
+        <div class="score-n">2.</div>
+        <div><div class="score-title" style="color:#d8b4fe">Normalize</div><div class="score-desc">clamp((x−min)/(max−min), 0, 1) per feature</div></div>
+      </div>
+      <div class="score-step">
+        <div class="score-n">3.</div>
+        <div><div class="score-title" style="color:#d8b4fe">Weight Apply</div><div class="score-desc">signed corr(feature, target), abs-normalized</div></div>
+      </div>
+      <div class="score-step">
+        <div class="score-n">4.</div>
+        <div><div class="score-title" style="color:#c084fc">Raw Score</div><div class="score-desc">sum(normalized_i × weight_i)</div></div>
+      </div>
+      <div class="score-step">
+        <div class="score-n">5.</div>
+        <div><div class="score-title" style="color:#c084fc">Risk Score</div><div class="score-desc">0.05 + 0.9 × clamp(raw, 0, 1)</div></div>
+      </div>
+      <div class="score-step">
+        <div class="score-n">6.</div>
+        <div><div class="score-title" style="color:var(--purple)">Confidence Band</div><div class="score-desc">low / medium / high from observation count</div></div>
+      </div>
+      <div class="score-step">
+        <div class="score-n">7.</div>
+        <div><div class="score-title" style="color:var(--purple)">Top Drivers</div><div class="score-desc">Largest absolute contributions</div></div>
+      </div>
+      <div class="score-step">
+        <div class="score-n">8.</div>
+        <div><div class="score-title" style="color:var(--purple)">Interventions</div><div class="score-desc">Rule-based map from top drivers + policy constraints</div></div>
+      </div>
+    </div>
+
+    <!-- Ingestion + Scheduler -->
+    <div>
+      <div class="sub-label" style="color:var(--amber)">INGESTION SERVICE · apps/ingestion</div>
+
+      <div class="ep" style="background:#1a1000;border:1px solid #f59e0b33">
+        <div class="ep-name" style="color:var(--amber)">GET /health</div>
+        <div class="ep-desc" style="color:#fcd34d">Service heartbeat</div>
+      </div>
+      <div class="ep" style="background:#1a1000;border:1px solid #f59e0b33">
+        <div class="ep-name" style="color:var(--amber)">GET /pipeline</div>
+        <div class="ep-desc" style="color:#fcd34d">Pipeline status + declared stage list</div>
+      </div>
+      <div class="ep" style="background:#1a1000;border:1px solid #f59e0b33">
+        <div class="ep-name" style="color:var(--amber)">POST /pipeline/run</div>
+        <div class="ep-desc" style="color:#fcd34d">Trigger full pipeline execution</div>
+      </div>
+
+      <div class="sub-label" style="color:var(--amber);margin-top:16px">PIPELINE STAGES</div>
+
+      <div class="stage"><div class="stage-dot" style="background:var(--gray)"></div><span style="color:var(--gray)">collect</span><span class="badge" style="background:#4b556322;border:1px solid var(--gray);color:var(--gray)">stub</span></div>
+      <div class="stage"><div class="stage-dot" style="background:var(--green)"></div><span style="color:var(--green)">validate</span><span class="badge" style="background:#22c55e22;border:1px solid var(--green);color:var(--green)">active</span></div>
+      <div class="stage"><div class="stage-dot" style="background:var(--gray)"></div><span style="color:var(--gray)">deduplicate</span><span class="badge" style="background:#4b556322;border:1px solid var(--gray);color:var(--gray)">stub</span></div>
+      <div class="stage"><div class="stage-dot" style="background:var(--gray)"></div><span style="color:var(--gray)">normalize</span><span class="badge" style="background:#4b556322;border:1px solid var(--gray);color:var(--gray)">stub</span></div>
+      <div class="stage"><div class="stage-dot" style="background:var(--gray)"></div><span style="color:var(--gray)">persist_raw</span><span class="badge" style="background:#4b556322;border:1px solid var(--gray);color:var(--gray)">stub</span></div>
+      <div class="stage"><div class="stage-dot" style="background:var(--gray)"></div><span style="color:var(--gray)">persist_processed</span><span class="badge" style="background:#4b556322;border:1px solid var(--gray);color:var(--gray)">stub</span></div>
+
+      <div class="sub-label" style="color:var(--orange);margin-top:20px">SCHEDULER · apps/scheduler</div>
+
+      <div class="ep" style="background:#1a0a00;border:1px solid #f9731633">
+        <div class="ep-name" style="color:var(--orange)">GET /health</div>
+        <div class="ep-desc" style="color:#fdba74">Scheduler heartbeat</div>
+      </div>
+      <div class="ep" style="background:#1a0a00;border:1px solid #f9731633">
+        <div class="ep-name" style="color:var(--orange)">GET /jobs</div>
+        <div class="ep-desc" style="color:#fdba74">List registered jobs</div>
+      </div>
+      <div class="ep" style="background:#1a0a00;border:1px solid #f9731633">
+        <div class="ep-name" style="color:var(--orange)">POST /jobs/run/{job_name}</div>
+        <div class="ep-desc" style="color:#fdba74">Trigger named job manually</div>
+      </div>
+
+      <div class="sub-label" style="color:var(--orange);margin-top:14px">SCHEDULED JOBS</div>
+      <div style="font-size:9px;color:var(--dim);margin-bottom:4px"><span style="color:var(--orange)">→</span> ingest_pipeline — HTTP → /pipeline/run</div>
+      <div style="font-size:9px;color:var(--dim);margin-bottom:4px"><span style="color:var(--orange)">→</span> score_regions — HTTP → /infer/regions</div>
+      <div style="font-size:9px;color:var(--gray);margin-bottom:4px"><span style="color:var(--dim)">→</span> train_baseline — planned automation</div>
+      <div style="font-size:9px;color:var(--gray);margin-bottom:4px"><span style="color:var(--dim)">→</span> build_labels — planned automation</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- TAB 3: DATA PIPELINE                                -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="panel" id="panel-3">
+  <div class="section-label">// DATA PIPELINE — RAW TO MODEL TO RESPONSE</div>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+
+    <!-- Raw sources -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+      <div class="node" style="background:#0f0f0f;border:1.5px solid var(--gray);width:190px">
+        <div class="node-title" style="color:var(--gray)">RAW: RAINFALL</div>
+        <div class="node-sub">apps/ai/data/raw/</div>
+        <div class="node-line">ken-rainfall-subnat-full.csv</div>
+        <div class="node-line">Sub-national granularity</div>
+        <div class="node-line">Monthly aggregatable</div>
+      </div>
+      <div class="node" style="background:#0f0f0f;border:1.5px solid var(--gray);width:190px">
+        <div class="node-title" style="color:var(--gray)">RAW: ACLED EVENTS</div>
+        <div class="node-sub">apps/ai/data/raw/</div>
+        <div class="node-line">Monthly event CSVs</div>
+        <div class="node-line">Incident type + fatalities</div>
+        <div class="node-line">Location + date</div>
+      </div>
+    </div>
+
+    <!-- Arrows down to processed -->
+    <div style="display:flex;gap:80px">
+      <div class="arrow-v">
+        <div class="arrow-label" style="color:var(--amber)">build_features.py</div>
+        <div class="arrow-line" style="background:var(--amber);opacity:.5"></div>
+        <div class="arrow-head" style="border-top:7px solid var(--amber);opacity:.5"></div>
+      </div>
+      <div class="arrow-v">
+        <div class="arrow-label" style="color:var(--red)">build_labels.py</div>
+        <div class="arrow-line" style="background:var(--red);opacity:.5"></div>
+        <div class="arrow-head" style="border-top:7px solid var(--red);opacity:.5"></div>
+      </div>
+    </div>
+
+    <!-- Processed -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+      <div class="node" style="background:#1a1000;border:1.5px solid var(--amber);width:200px">
+        <div class="node-title" style="color:var(--amber)">FEATURES</div>
+        <div class="node-sub">data/processed/</div>
+        <div class="node-line">rainfall_features_monthly_national.csv</div>
+        <div class="node-line">rainfall_features_monthly_subnational.csv</div>
+        <div class="node-line">Aggregated monthly windows</div>
+      </div>
+      <div class="node" style="background:#1a0000;border:1.5px solid var(--red);width:200px">
+        <div class="node-title" style="color:var(--red)">LABELS</div>
+        <div class="node-sub">data/processed/</div>
+        <div class="node-line">event_labels_monthly_national.csv</div>
+        <div class="node-line">target = total_events</div>
+        <div class="node-line">+ min(fatalities, 100) / 10</div>
+      </div>
+    </div>
+
+    <div class="arrow-v">
+      <div class="arrow-label" style="color:var(--purple)">train_lgbm.py</div>
+      <div class="arrow-line" style="background:var(--purple);opacity:.5"></div>
+      <div class="arrow-head" style="border-top:7px solid var(--purple);opacity:.5"></div>
+    </div>
+
+    <!-- Model artifact -->
+    <div class="node" style="background:#1a0a2e;border:1.5px solid var(--purple);box-shadow:0 0 16px #a855f722;width:340px">
+      <div class="node-title" style="color:var(--purple)">MODEL ARTIFACT</div>
+      <div class="node-sub">data/artifacts/baseline_risk_model.json</div>
+      <div class="node-line">Feature weight map (signed correlation, abs-normalized)</div>
+      <div class="node-line">min/max bounds for per-feature normalization</div>
+      <div class="node-line">Observation count metadata → confidence band</div>
+    </div>
+
+    <div class="arrow-v">
+      <div class="arrow-label" style="color:var(--purple)">Model Loader reads at startup</div>
+      <div class="arrow-line" style="background:var(--purple);opacity:.5"></div>
+      <div class="arrow-head" style="border-top:7px solid var(--purple);opacity:.5"></div>
+    </div>
+
+    <!-- Engines -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+      <div class="node" style="background:#1a0a2e;border:1.5px solid var(--purple);width:195px">
+        <div class="node-title" style="color:var(--purple)">SCORING ENGINE</div>
+        <div class="node-sub">response_builder.py</div>
+        <div class="node-line">Normalize features</div>
+        <div class="node-line">Apply weights → raw score</div>
+        <div class="node-line">risk = 0.05 + 0.9 × raw</div>
+        <div class="node-line">Confidence band</div>
+      </div>
+      <div class="node" style="background:#1a0a2e;border:1.5px solid var(--purple);width:195px">
+        <div class="node-title" style="color:var(--purple)">EXPLANATION ENGINE</div>
+        <div class="node-sub">response_builder.py</div>
+        <div class="node-line">Top-k contributor features</div>
+        <div class="node-line">Text summary generation</div>
+        <div class="node-line">Uncertainty notes</div>
+        <div class="node-line">Intervention rule map</div>
+      </div>
+    </div>
+
+    <div class="arrow-v">
+      <div class="arrow-label" style="color:var(--green)">/infer/risk · /infer/explain · /infer/interventions</div>
+      <div class="arrow-line" style="background:var(--green);opacity:.5"></div>
+      <div class="arrow-head" style="border-top:7px solid var(--green);opacity:.5"></div>
+    </div>
+
+    <!-- API response -->
+    <div class="node" style="background:#0d1f0d;border:1.5px solid var(--green);box-shadow:0 0 16px #22c55e18;width:400px">
+      <div class="node-title" style="color:var(--green)">API RESPONSE → FRONTEND</div>
+      <div class="node-sub">via AI Gateway in apps/api</div>
+      <div class="node-line">risk_score, confidence, top_drivers</div>
+      <div class="node-line">explanation text + uncertainty notes</div>
+      <div class="node-line">interventions[] with policy constraints</div>
+      <div class="node-line">Delivered to dashboard + report layer</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div><span class="legend-label">User/Browser</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><span class="legend-label">Frontend</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span class="legend-label">Backend API</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><span class="legend-label">AI Service</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span class="legend-label">Ingestion</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div><span class="legend-label">Scheduler</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span class="legend-label">Auth</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--indigo)"></div><span class="legend-label">Audit</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--gray)"></div><span class="legend-label">Data/Storage</span></div>
+</div>
+
+<script>
+  // Auth flow steps data
+  const steps = [
+    { actor: "Browser", action: "POST /auth/login", detail: "{ email, password }", color: "#00e5ff" },
+    { actor: "API /auth/login", action: "Verify credentials", detail: "Check DB, hash compare", color: "#22c55e" },
+    { actor: "API", action: "Issue JWT", detail: "Signed token with role payload", color: "#22c55e" },
+    { actor: "Browser", action: "Store token", detail: "In-memory / secure cookie", color: "#00e5ff" },
+    { actor: "Browser", action: "GET /auth/me", detail: "Authorization: Bearer <token>", color: "#00e5ff" },
+    { actor: "Auth Service", action: "Validate JWT", detail: "Signature + expiry check", color: "#ef4444" },
+    { actor: "Auth Service", action: "Extract role", detail: "viewer | analyst | operator | admin", color: "#ef4444" },
+    { actor: "API Middleware", action: "RBAC gate", detail: "Route access check by role", color: "#6366f1" },
+    { actor: "API Handler", action: "Execute request", detail: "DB / AI inference / report", color: "#22c55e" },
+    { actor: "Audit DB", action: "Write audit record", detail: "action + resource + outcome + timestamp", color: "#6366f1" },
+    { actor: "API", action: "Return response", detail: "JSON payload to frontend", color: "#22c55e" },
+  ];
+
+  const container = document.getElementById('steps');
+  steps.forEach((s, i) => {
+    container.innerHTML += `
+      <div class="step">
+        <div class="step-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="step-bar" style="background:${s.color}"></div>
+        <div>
+          <div class="step-actor" style="color:${s.color}">${s.actor}</div>
+          <div class="step-action">${s.action}</div>
+          <div class="step-detail">${s.detail}</div>
+        </div>
+      </div>`;
+  });
+
+  // Tab switching
+  function showTab(i) {
+    document.querySelectorAll('.panel').forEach((p,j) => {
+      p.classList.toggle('active', j === i);
+    });
+    document.querySelectorAll('.tab').forEach((t,j) => {
+      t.classList.toggle('active', j === i);
+    });
+  }
+</script>
+
+</body>
+</html>

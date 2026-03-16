@@ -16,6 +16,7 @@ from .ai import AIGateway, AIGatewayError
 from .audit import list_audit_events, log_audit_event
 from .auth import AuthService, role_allowed
 from .db import Base, SessionLocal, engine
+from .region_intelligence import build_regional_briefing
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("api_service.main")
@@ -343,20 +344,19 @@ async def alert_list(authorization: str | None = Header(default=None)) -> dict[s
         _authorize_read(db, authorization, action="alerts.read", resource="alerts")
         regions = await ai_gateway.list_regions(20)
         now = datetime.utcnow()
-        rows = []
-        for index, region in enumerate(regions.get("regions", [])[:10], start=1):
-            risk_score = float(region["risk_score"])
-            rows.append(
-                {
-                    "id": index,
-                    "severity": "elevated" if risk_score >= 0.7 else "moderate",
-                    "title": f"Elevated pressure in {region['region_id']}",
-                    "description": f"Primary driver: {region['primary_driver']}. Risk score {risk_score:.2f}.",
-                    "timestamp": now.isoformat(),
-                    "region": region["region_id"],
-                    "status": "active" if risk_score >= 0.55 else "monitoring",
-                }
-            )
+        briefing = build_regional_briefing(regions.get("regions", []), limit=8)
+        rows = [
+            {
+                "id": index,
+                "severity": "elevated" if region["riskLevel"] in {"critical", "elevated"} else "moderate",
+                "title": f"{region['thresholdStatus']} in {region['name']}",
+                "description": region["thresholdReason"],
+                "timestamp": now.isoformat(),
+                "region": region["name"],
+                "status": "active" if region["riskLevel"] in {"critical", "elevated"} else "monitoring",
+            }
+            for index, region in enumerate(briefing, start=1)
+        ]
         return {
             "data": rows,
             "success": True,
@@ -404,19 +404,9 @@ async def regional_data(authorization: str | None = Header(default=None)) -> dic
     try:
         _authorize_read(db, authorization, action="regional.read", resource="regional_data")
         regions = await ai_gateway.list_regions(100)
-        rows = [
-            {
-                "region": row["region_id"],
-                "population": "N/A",
-                "stabilityIndex": max(0, int(round(100 - (float(row["risk_score"]) * 100)))),
-                "trend": "Elevated" if float(row["risk_score"]) >= 0.7 else "Monitoring",
-                "primaryDriver": row["primary_driver"],
-                "confidence": "High" if float(row["confidence"]) >= 0.8 else "Medium",
-            }
-            for row in regions.get("regions", [])
-        ]
+        rows = build_regional_briefing(regions.get("regions", []), limit=8)
         latest_snapshot = max(
-            (row.get("feature_snapshot_timestamp", "") for row in regions.get("regions", [])),
+            (row.get("featureSnapshotTimestamp", "") for row in rows),
             default=datetime.utcnow().isoformat(),
         )
         return {
@@ -439,28 +429,8 @@ async def regional_map(authorization: str | None = Header(default=None)) -> dict
     db = _db()
     try:
         _authorize_read(db, authorization, action="regional.read", resource="regional_map")
-        regions = await ai_gateway.list_regions(12)
-        rows = []
-        for index, row in enumerate(regions.get("regions", [])):
-            col = index % 3
-            grid_row = index // 3
-            risk_score = float(row["risk_score"])
-            rows.append(
-                {
-                    "id": row["region_id"],
-                    "name": row["region_id"],
-                    "riskLevel": "high" if risk_score >= 0.7 else "moderate" if risk_score >= 0.45 else "low",
-                    "primaryDriver": row["primary_driver"],
-                    "secondaryDriver": "Model-derived pressure",
-                    "confidence": "High" if float(row["confidence"]) >= 0.8 else "Medium",
-                    "coordinates": {
-                        "x": 32 + (col * 118),
-                        "y": 40 + (grid_row * 88),
-                        "width": 96,
-                        "height": 64,
-                    },
-                }
-            )
+        regions = await ai_gateway.list_regions(24)
+        rows = build_regional_briefing(regions.get("regions", []), limit=8)
         return {
             "data": rows,
             "success": True,

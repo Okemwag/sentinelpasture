@@ -12,7 +12,11 @@ type RegionRow = {
   population: string;
   stabilityIndex: number;
   trend: string;
+  thresholdStatus: string;
+  riskScore: number;
+  riskLevel: "low" | "watch" | "elevated" | "critical";
   primaryDriver: string;
+  storySummary: string;
   confidence: string;
 };
 
@@ -81,9 +85,10 @@ export default function RegionalRiskPage() {
               <tr className="border-b border-[#E5E7EB]">
                 <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Region</th>
                 <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Population</th>
+                <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Alert Status</th>
                 <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Stability Index</th>
-                <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Trend</th>
                 <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Primary Driver</th>
+                <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Why This Matters</th>
                 <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Confidence</th>
               </tr>
             </thead>
@@ -95,9 +100,10 @@ export default function RegionalRiskPage() {
                 >
                   <td className="px-4 py-3 text-[15px] font-medium text-[#111111]">{region.region}</td>
                   <td className="px-4 py-3 text-[15px] text-[#6B7280]">{region.population}</td>
+                  <td className="px-4 py-3 text-[15px] font-medium text-[#111111]">{region.thresholdStatus || region.trend}</td>
                   <td className="px-4 py-3 text-[15px] text-[#111111]">{region.stabilityIndex}</td>
-                  <td className="px-4 py-3 text-[15px] text-[#111111]">{region.trend}</td>
                   <td className="px-4 py-3 text-[15px] text-[#6B7280]">{region.primaryDriver}</td>
+                  <td className="px-4 py-3 text-[14px] leading-6 text-[#4B5A52]">{region.storySummary}</td>
                   <td className="px-4 py-3 text-[15px] text-[#111111]">{region.confidence}</td>
                 </tr>
               ))}

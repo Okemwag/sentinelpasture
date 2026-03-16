@@ -8,8 +8,10 @@ type RegionRow = {
   region: string;
   stabilityIndex: number;
   trend: string;
+  thresholdStatus: string;
   primaryDriver: string;
   confidence: string;
+  storySummary: string;
 };
 
 export default function PressureZonesTable() {
@@ -51,9 +53,10 @@ export default function PressureZonesTable() {
         <thead>
           <tr className="border-b border-[#E5E7EB]">
             <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Region</th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Alert Status</th>
             <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Stability Index</th>
-            <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Trend</th>
             <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Primary Driver</th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Why This Matters</th>
             <th className="px-4 py-3 text-left text-[13px] font-medium text-[#6B7280]">Confidence</th>
           </tr>
         </thead>
@@ -64,9 +67,10 @@ export default function PressureZonesTable() {
               className="border-b border-[#E5E7EB] last:border-0 transition-colors duration-150 hover:bg-[#F9FAFB]"
             >
               <td className="px-4 py-3 text-[15px] text-[#111111]">{zone.region}</td>
+              <td className="px-4 py-3 text-[15px] font-medium text-[#111111]">{zone.thresholdStatus || zone.trend}</td>
               <td className="px-4 py-3 text-[15px] text-[#111111]">{zone.stabilityIndex}</td>
-              <td className="px-4 py-3 text-[15px] text-[#111111]">{zone.trend}</td>
               <td className="px-4 py-3 text-[15px] text-[#6B7280]">{zone.primaryDriver}</td>
+              <td className="px-4 py-3 text-[14px] leading-6 text-[#4B5A52]">{zone.storySummary}</td>
               <td className="px-4 py-3 text-[15px] text-[#111111]">{zone.confidence}</td>
             </tr>
           ))}
@@ -81,7 +85,9 @@ const placeholderRows: RegionRow[] = [
     region: "Loading regions",
     stabilityIndex: 0,
     trend: "Pending",
+    thresholdStatus: "Pending",
     primaryDriver: "Pending",
     confidence: "Pending",
+    storySummary: "Loading regional narrative",
   },
 ];

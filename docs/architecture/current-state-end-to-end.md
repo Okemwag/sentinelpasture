@@ -87,6 +87,84 @@ The important current constraint is this:
 - the serving model artifact is loaded from
   `apps/ai/data/artifacts/baseline_risk_model.json`.
 
+## 2.1 Mermaid: End-to-End System Flow
+
+```mermaid
+flowchart TD
+    U[User / Analyst] --> WEB[Web App\napps/web\nNext.js dashboard]
+    WEB --> API[Backend API\napps/api\nAuth + RBAC + Audit + Dashboard shaping]
+    API --> AI[AI Service\napps/ai\nRisk + Explain + Interventions]
+
+    API --> DB[(SQLite\nusers + audit events)]
+
+    SCH[Scheduler\napps/scheduler\njob trigger facade] --> ING[Ingestion\napps/ingestion\npipeline orchestration]
+    SCH --> AI
+
+    ING --> RAW[(Raw CSV data\napps/ai/data/raw)]
+    ING --> BF[Build Features\nmonthly rainfall features]
+    ING --> BL[Build Labels\nmonthly event labels]
+    ING --> TRAIN[Train Baseline Artifact]
+
+    RAW --> BF
+    RAW --> BL
+    BF --> PROC[(Processed CSVs\napps/ai/data/processed)]
+    BL --> PROC
+    TRAIN --> ART[(Model artifact JSON\napps/ai/data/artifacts/baseline_risk_model.json)]
+
+    PROC --> AI
+    ART --> AI
+    AI --> API
+```
+
+## 2.2 Mermaid: Service Responsibilities
+
+```mermaid
+flowchart LR
+    subgraph WEBLAYER[Presentation]
+        WEB[apps/web\nPages, charts, auth gate,\nreport downloads]
+    end
+
+    subgraph APILAYER[Control Plane]
+        API[apps/api\nLogin, JWT auth, RBAC,\naudit, dashboard endpoints]
+        AUDIT[(Audit log)]
+        USERS[(Users)]
+        API --> AUDIT
+        API --> USERS
+    end
+
+    subgraph AILAYER[Inference and Modeling]
+        AI[apps/ai\nInference API]
+        FEAT[Feature snapshot loader]
+        MODEL[Baseline model loader]
+        SCORE[Score + explain + interventions]
+        AI --> FEAT
+        AI --> MODEL
+        FEAT --> SCORE
+        MODEL --> SCORE
+    end
+
+    subgraph DATALAYER[Pipeline]
+        ING[apps/ingestion\nBootstrap, validate,\nfeature build, label build, train]
+        RAW[(Raw CSVs)]
+        PROC[(Processed CSVs)]
+        ART[(Model artifact)]
+        ING --> RAW
+        ING --> PROC
+        ING --> ART
+    end
+
+    subgraph ORCH[Automation]
+        SCH[apps/scheduler\nHTTP-triggered jobs]
+    end
+
+    WEB --> API
+    API --> AI
+    SCH --> ING
+    SCH --> AI
+    PROC --> AI
+    ART --> AI
+```
+
 ## 3. End-to-End Flow
 
 ### Step 1: Raw data lands
@@ -188,6 +266,39 @@ So the active algorithm is best described as:
 - not an anomaly autoencoder.
 
 Those advanced model files exist mostly as placeholders for later work.
+
+## 5.1 Mermaid: ML / Training / Inference Flow
+
+```mermaid
+flowchart TD
+    RAIN[Raw rainfall CSV] --> FBUILD[Feature builder]
+    ACLED[Raw event CSVs] --> LBUILD[Label builder]
+
+    FBUILD --> FEATS[Monthly features]
+    LBUILD --> LABELS[Monthly labels]
+
+    FEATS --> JOIN[Join by period]
+    LABELS --> JOIN
+
+    JOIN --> TARGET[Target score\n total_events + min(total_fatalities,100)/10]
+    TARGET --> BANDS[Tertile risk bands]
+    TARGET --> CORR[Signed correlation per feature]
+    CORR --> WEIGHTS[Absolute normalized feature weights]
+    WEIGHTS --> ART[baseline_risk_model.json]
+    BANDS --> ART
+
+    FEATS --> SNAP[Latest region snapshot]
+    ART --> NORM[Min-max normalization]
+    SNAP --> NORM
+    NORM --> WSUM[Weighted sum]
+    WSUM --> RISK[Risk score\n 0.05 + 0.9 * clamp(raw,0,1)]
+    RISK --> DRIVERS[Top driver contributions]
+    DRIVERS --> EXPLAIN[Explanation text]
+    DRIVERS --> INTV[Rule-based interventions]
+    SNAP --> CONF[Confidence from observation count]
+    CONF --> EXPLAIN
+    CONF --> INTV
+```
 
 ### Step 6: Online inference runs
 

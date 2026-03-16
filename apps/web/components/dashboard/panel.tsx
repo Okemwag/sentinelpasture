@@ -13,8 +13,16 @@ interface PanelProps {
 
 export default function Panel({ title, children, metadata }: PanelProps) {
   const handleExplain = () => {
-    // In production, this would open a modal with detailed methodology
-    alert("Methodology explanation:\n\nThis metric is computed using:\n- Data sources: National statistical agencies, sensor networks\n- Model: Ensemble prediction system v2.4.1\n- Confidence calculation: Based on data quality and model agreement\n- Last calibration: 2026-02-15\n\nFor detailed documentation, see the technical reference manual.");
+    alert(
+      "Methodology explanation:\n\n" +
+      "- Data sources: monthly rainfall feature snapshots plus event-label histories\n" +
+      "- Model: baseline-risk-model-v1 (correlation-weighted statistical baseline)\n" +
+      "- Scoring: min-max normalized features weighted by historical relationship to event and fatality pressure\n" +
+      "- Thresholds: low / watch / elevated / critical bands from current risk score\n" +
+      "- Confidence: observation-count heuristic\n" +
+      "- Narratives: region-specific operational templates tied to the top driver\n" +
+      "- Interventions: rule-based options constrained by policy guardrails"
+    );
   };
 
   return (

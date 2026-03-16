@@ -5,6 +5,8 @@ import { authHeader, getApiBaseUrl, getApiRootUrl, type AuthSession, type AuthUs
 const API_BASE_URL = getApiBaseUrl();
 const API_ROOT_URL = getApiRootUrl();
 
+export type RegionalRiskLevel = "low" | "watch" | "elevated" | "critical";
+
 export interface ApiResponse<T> {
   data: T;
   success: boolean;
@@ -116,8 +118,18 @@ class ApiClient {
       population: string;
       stabilityIndex: number;
       trend: string;
+      riskScore: number;
+      riskLevel: RegionalRiskLevel;
+      thresholdStatus: string;
       primaryDriver: string;
+      secondaryDriver: string;
       confidence: string;
+      storySummary: string;
+      thresholdReason: string;
+      communityContext: string;
+      watchItems: string[];
+      exposure: string;
+      sourceRegionId: string;
     }>>('/regional/data');
   }
 
@@ -125,11 +137,18 @@ class ApiClient {
     return this.request<Array<{
       id: string;
       name: string;
-      riskLevel: 'low' | 'moderate' | 'high';
+      shapeId: string;
+      riskLevel: RegionalRiskLevel;
+      riskScore: number;
+      thresholdStatus: string;
       primaryDriver: string;
       secondaryDriver: string;
       confidence: string;
-      coordinates: { x: number; y: number; width: number; height: number };
+      storySummary: string;
+      thresholdReason: string;
+      communityContext: string;
+      watchItems: string[];
+      sourceRegionId: string;
     }>>('/regional/map');
   }
 
