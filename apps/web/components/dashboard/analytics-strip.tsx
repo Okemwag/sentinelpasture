@@ -62,29 +62,29 @@ export default function AnalyticsStrip({ trendData, comparisonData, selectedRegi
     const analyticsCount = comparisonData.length;
 
     return (
-        <div className="bg-white border border-[#E5E7EB] rounded-[8px] overflow-hidden">
+        <div className="bg-[var(--intel-s0)] border border-[var(--intel-border)] rounded-[8px] overflow-hidden">
             {/* Tab bar */}
-            <div className="flex items-center border-b border-[#E5E7EB] px-2 overflow-x-auto gap-0 no-scrollbar">
+            <div className="flex items-center border-b border-[var(--intel-border-subtle)] px-2 overflow-x-auto gap-0 no-scrollbar bg-[var(--intel-s1)]">
                 {SIGNAL_TABS.map((t) => (
                     <button
                         key={t.id}
                         type="button"
                         onClick={() => setTab(t.id)}
                         className={`px-3.5 py-3 text-[12px] font-medium border-b-2 whitespace-nowrap transition-colors ${tab === t.id
-                                ? "border-[#111111] text-[#111111]"
-                                : "border-transparent text-[#9CA3AF] hover:text-[#374151]"
+                                ? "border-[var(--intel-text-primary)] text-[var(--intel-text-primary)]"
+                                : "border-transparent text-[var(--intel-text-muted)] hover:text-[var(--intel-text-secondary)]"
                             }`}
                     >
                         {t.label}
                     </button>
                 ))}
-                <div className="mx-1 h-4 w-px bg-[#E5E7EB] shrink-0" />
+                <div className="mx-1 h-4 w-px bg-[var(--intel-border-subtle)] shrink-0" />
                 <button
                     type="button"
                     onClick={() => setTab("causal")}
-                    className={`px-3.5 py-3 text-[12px] font-medium border-b-2 whitespace-nowrap transition-colors ${tab === "causal"
-                            ? "border-[#111111] text-[#111111]"
-                            : "border-transparent text-[#9CA3AF] hover:text-[#374151]"
+                        className={`px-3.5 py-3 text-[12px] font-medium border-b-2 whitespace-nowrap transition-colors ${tab === "causal"
+                            ? "border-[var(--intel-text-primary)] text-[var(--intel-text-primary)]"
+                            : "border-transparent text-[var(--intel-text-muted)] hover:text-[var(--intel-text-secondary)]"
                         }`}
                 >
                     Causal Chain
@@ -92,15 +92,18 @@ export default function AnalyticsStrip({ trendData, comparisonData, selectedRegi
                 <button
                     type="button"
                     onClick={() => setTab("compare")}
-                    className={`px-3.5 py-3 text-[12px] font-medium border-b-2 whitespace-nowrap transition-colors ${tab === "compare"
-                            ? "border-[#111111] text-[#111111]"
-                            : "border-transparent text-[#9CA3AF] hover:text-[#374151]"
+                        className={`px-3.5 py-3 text-[12px] font-medium border-b-2 whitespace-nowrap transition-colors ${tab === "compare"
+                            ? "border-[var(--intel-text-primary)] text-[var(--intel-text-primary)]"
+                            : "border-transparent text-[var(--intel-text-muted)] hover:text-[var(--intel-text-secondary)]"
                         }`}
                 >
-                    Region Compare {analyticsCount > 0 && <span className="ml-1 text-[11px] text-[#9CA3AF]">({analyticsCount})</span>}
+                    Region Compare{" "}
+                    {analyticsCount > 0 && (
+                        <span className="ml-1 text-[11px] text-[var(--intel-text-muted)]">({analyticsCount})</span>
+                    )}
                 </button>
                 {selectedRegionName && (
-                    <span className="ml-auto text-[11px] text-[#9CA3AF] px-3 whitespace-nowrap shrink-0">
+                    <span className="ml-auto text-[11px] text-[var(--intel-text-muted)] px-3 whitespace-nowrap shrink-0">
                         {selectedRegionName}
                     </span>
                 )}
@@ -112,8 +115,8 @@ export default function AnalyticsStrip({ trendData, comparisonData, selectedRegi
                 {activeSignal && (
                     <div className="animate-fade-in">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] text-[#9CA3AF]">{activeSignal.description}</span>
-                            <span className="text-[11px] text-[#9CA3AF]">Weekly · 16 weeks</span>
+                            <span className="text-[11px] text-[var(--intel-text-muted)]">{activeSignal.description}</span>
+                            <span className="text-[11px] text-[var(--intel-text-muted)]">Weekly · 16 weeks</span>
                         </div>
                         <LineChart
                             data={signalCharts[activeSignal.id] ?? []}
@@ -135,7 +138,7 @@ export default function AnalyticsStrip({ trendData, comparisonData, selectedRegi
                         {comparisonData.length > 0 ? (
                             <ComparisonChart data={comparisonData} />
                         ) : (
-                            <div className="flex items-center justify-center h-[170px] text-[13px] text-[#9CA3AF]">
+                            <div className="flex items-center justify-center h-[170px] text-[13px] text-[var(--intel-text-muted)]">
                                 No comparison data available
                             </div>
                         )}

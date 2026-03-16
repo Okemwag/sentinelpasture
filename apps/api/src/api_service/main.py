@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from datetime import datetime
+import csv
 import logging
+from pathlib import Path
 from typing import Any
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,6 +44,7 @@ class LoginRequest(BaseModel):
 
 auth_service = AuthService()
 ai_gateway = AIGateway()
+ROOT = Path(__file__).resolve().parents[3]
 
 
 @asynccontextmanager
@@ -123,6 +126,20 @@ def _metadata_from(payload: dict[str, Any], confidence: str) -> dict[str, Any]:
         "lastUpdated": metadata.get("feature_snapshot_timestamp", datetime.utcnow().isoformat()),
         "confidence": confidence,
     }
+
+
+def _load_violence_rows(limit: int = 60) -> list[dict[str, Any]]:
+    """Read recent rows from the baseline training dataset for violence/event analysis."""
+    path = ROOT / "ai" / "data" / "processed" / "training_baseline_monthly_national.csv"
+    if not path.exists():
+        logger.warning("violence summary requested but %s is missing", path)
+        return []
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        rows = list(reader)
+    # Keep only the most recent N periods
+    rows = rows[-limit:]
+    return rows
 
 
 @app.get("/")
@@ -542,14 +559,15 @@ async def interventions_list(
             raise HTTPException(status_code=403, detail="Analyst role required")
         regions = await ai_gateway.list_regions(20)
         target_region = region
+        target_region_row: dict[str, Any] | None = None
         if not target_region:
-            highest = max(
+            target_region_row = max(
                 regions.get("regions", []),
                 key=lambda row: float(row["risk_score"]),
                 default=None,
             )
-            if highest:
-                target_region = str(highest["region_id"])
+            if target_region_row:
+                target_region = str(target_region_row["region_id"])
         if not target_region:
             raise HTTPException(status_code=404, detail="No regions available for intervention ranking")
 
@@ -562,10 +580,23 @@ async def interventions_list(
             {"risk_score": risk_score},
         )
         _log_request(db, user=user, action="interventions.list", resource=target_region)
+        region_meta: dict[str, Any] = {}
+        if target_region_row:
+            region_meta = {
+                "regionName": target_region_row.get("name"),
+                "regionId": target_region_row.get("region_id"),
+                "riskScore": target_region_row.get("risk_score"),
+                "riskLevel": target_region_row.get("riskLevel"),
+                "thresholdStatus": target_region_row.get("thresholdStatus"),
+                "primaryDriver": target_region_row.get("primaryDriver"),
+                "thresholdReason": target_region_row.get("thresholdReason"),
+            }
+        base_meta = _metadata_from(response, "Medium")
+        base_meta.update(region_meta)
         return {
             "data": response["interventions"],
             "success": True,
-            "metadata": _metadata_from(response, "Medium"),
+            "metadata": base_meta,
         }
     except AIGatewayError as exc:
         raise _ai_unavailable(exc) from exc
@@ -632,6 +663,41 @@ async def outcomes_chart(authorization: str | None = Header(default=None)) -> di
         }
     except AIGatewayError as exc:
         raise _ai_unavailable(exc) from exc
+    finally:
+        db.close()
+
+
+@app.get("/api/violence/timeseries")
+async def violence_timeseries(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    """Return national monthly counts of demonstrations and political violence."""
+    db = _db()
+    try:
+        _authorize_read(db, authorization, action="violence.read", resource="violence_timeseries")
+        rows = _load_violence_rows(limit=120)
+        timeseries: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                timeseries.append(
+                    {
+                        "date": row["period"],
+                        "totalEvents": int(float(row["total_events"])),
+                        "totalFatalities": int(float(row["total_fatalities"])),
+                        "demonstrationsEvents": int(float(row["demonstrations_events"])),
+                        "civilianTargetingEvents": int(float(row["civilian_targeting_events"])),
+                        "politicalViolenceEvents": int(float(row["political_violence_events"])),
+                    }
+                )
+            except (KeyError, ValueError):
+                continue
+        return {
+            "data": timeseries,
+            "success": True,
+            "metadata": {
+                "modelVersion": "baseline-risk-model-v1",
+                "lastUpdated": datetime.utcnow().isoformat(),
+                "confidence": "Medium",
+            },
+        }
     finally:
         db.close()
 

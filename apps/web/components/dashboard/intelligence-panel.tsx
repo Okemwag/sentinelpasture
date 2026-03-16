@@ -156,7 +156,7 @@ function TrendBadge({ trend }: { trend: string }) {
     const down = trend === "down";
     return (
         <span
-            className={`inline-flex items-center gap-1 text-[12px] font-medium ${up ? "text-[#8C6A3D]" : down ? "text-[#3A6B33]" : "text-[#6B7280]"
+            className={`inline-flex items-center gap-1 text-[12px] font-medium ${up ? "text-[var(--intel-risk-elevated)]" : down ? "text-[var(--intel-risk-low)]" : "text-[var(--intel-text-secondary)]"
                 }`}
         >
             {up ? "↑ Increasing" : down ? "↓ Decreasing" : "→ Stable"}
@@ -184,13 +184,13 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
     if (!region) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
-                <div className="w-10 h-10 rounded-full bg-[#F3F4F6] flex items-center justify-center mb-4">
-                    <svg className="w-5 h-5 text-[#9CA3AF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-10 h-10 rounded-full bg-[var(--intel-s1)] flex items-center justify-center mb-4 border border-[var(--intel-border-subtle)]">
+                    <svg className="w-5 h-5 text-[var(--intel-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
                 </div>
-                <div className="text-[14px] font-medium text-[#374151] mb-1">Select a region</div>
-                <div className="text-[13px] text-[#9CA3AF]">Click any region on the map to view intelligence analysis</div>
+                <div className="text-[14px] font-medium text-[var(--intel-text-primary)] mb-1">Select a region</div>
+                <div className="text-[13px] text-[var(--intel-text-muted)]">Click any region on the map to view intelligence analysis</div>
             </div>
         );
     }
@@ -208,7 +208,7 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
     const displayedInterventions = interventions.length ? interventions : FALLBACK_INTERVENTIONS;
 
     return (
-        <div className="intel-scroll h-full px-5 py-5 space-y-5 animate-slide-right">
+        <div className="px-5 py-5 space-y-5 animate-slide-right bg-[var(--intel-s0)]">
 
             {/* ── Region Profile ── */}
             <div>
@@ -219,17 +219,21 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                         >
                             {palette.label}
                         </span>
-                        <h2 className="mt-2 text-[20px] font-semibold text-[#111111] leading-tight">{region.name}</h2>
+                        <h2 className="mt-2 text-[18px] font-semibold text-[var(--intel-text-primary)] leading-tight">
+                            {region.name}
+                        </h2>
                     </div>
                     <div className="text-right shrink-0">
-                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#9CA3AF]">Risk Score</div>
-                        <div className="text-[28px] font-bold leading-none mt-0.5" style={{ color: palette.textColor }}>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[var(--intel-text-muted)]">Risk Score</div>
+                        <div className="text-[26px] font-bold leading-none mt-0.5" style={{ color: palette.textColor }}>
                             {Math.round(region.riskScore * 100)}
                         </div>
-                        <div className="text-[11px] text-[#9CA3AF] mt-0.5">Confidence {region.confidence}</div>
+                        <div className="text-[11px] text-[var(--intel-text-muted)] mt-0.5">
+                            Confidence {region.confidence}
+                        </div>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 gap-1.5 bg-[#F9FAFB] rounded-[8px] p-3 border border-[#F3F4F6]">
+                <div className="grid grid-cols-1 gap-1.5 bg-[var(--intel-s1)] rounded-[8px] p-3 border border-[var(--intel-border-subtle)]">
                     {[
                         { label: "Economy", val: profile.economy },
                         { label: "Climate", val: profile.climate },
@@ -237,20 +241,22 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                         ...(region.population ? [{ label: "Population", val: region.population }] : []),
                     ].map(({ label, val }) => (
                         <div key={label} className="flex gap-2 text-[12px]">
-                            <span className="text-[#9CA3AF] w-16 shrink-0">{label}</span>
-                            <span className="text-[#374151]">{val}</span>
+                            <span className="text-[var(--intel-text-muted)] w-16 shrink-0">{label}</span>
+                            <span className="text-[var(--intel-text-secondary)]">{val}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <div className="border-t border-[#F3F4F6]" />
+            <div className="border-t border-[var(--intel-border-subtle)]" />
 
             {/* ── Risk Signal ── */}
             <div>
                 <SectionLabel>Risk Signal</SectionLabel>
-                <div className="bg-[#F9FAFB] rounded-[8px] p-3 border border-[#F3F4F6]">
-                    <div className="text-[14px] font-medium text-[#111111] mb-2">{region.thresholdStatus}</div>
+                <div className="bg-[var(--intel-s1)] rounded-[8px] p-3 border border-[var(--intel-border-subtle)]">
+                    <div className="text-[14px] font-medium text-[var(--intel-text-primary)] mb-2">
+                        {region.thresholdStatus}
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                         <InfoPair label="Time Horizon" val="14–30 days" />
                         <InfoPair label="Trend" val={<TrendBadge trend={trend} />} />
@@ -258,10 +264,12 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                         <InfoPair label="Secondary" val={region.secondaryDriver?.split(",")[0] ?? "—"} />
                     </div>
                 </div>
-                <p className="mt-2 text-[12px] leading-relaxed text-[#6B7280]">{region.thresholdReason}</p>
+                <p className="mt-2 text-[12px] leading-relaxed text-[var(--intel-text-secondary)]">
+                    {region.thresholdReason}
+                </p>
             </div>
 
-            <div className="border-t border-[#F3F4F6]" />
+            <div className="border-t border-[var(--intel-border-subtle)]" />
 
             {/* ── Drivers ── */}
             <div>
@@ -286,7 +294,7 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                     <div className="text-[12px] font-semibold text-[#5A4A2E] mb-2">{history.title}</div>
                     <ul className="space-y-1">
                         {history.consequences.map((c) => (
-                            <li key={c} className="flex items-start gap-1.5 text-[12px] text-[#6B7280]">
+                            <li key={c} className="flex items-start gap-1.5 text-[12px] text-[var(--intel-text-secondary)]">
                                 <span className="text-[#C7A56B] mt-0.5 shrink-0">–</span>
                                 {c}
                             </li>
@@ -295,16 +303,16 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                 </div>
             </div>
 
-            <div className="border-t border-[#F3F4F6]" />
+            <div className="border-t border-[var(--intel-border-subtle)]" />
 
             {/* ── Predictions ── */}
             <div>
                 <SectionLabel>Predicted Consequences</SectionLabel>
-                <p className="text-[11px] text-[#9CA3AF] mb-3">If current conditions persist:</p>
+                <p className="text-[11px] text-[var(--intel-text-muted)] mb-3">If current conditions persist:</p>
                 <ProbabilityBars items={probabilities} />
             </div>
 
-            <div className="border-t border-[#F3F4F6]" />
+            <div className="border-t border-[var(--intel-border-subtle)]" />
 
             {/* ── Socioeconomic Exposure ── */}
             <div>
@@ -317,12 +325,12 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                 </div>
             </div>
 
-            <div className="border-t border-[#F3F4F6]" />
+            <div className="border-t border-[var(--intel-border-subtle)]" />
 
             {/* ── Interventions ── */}
             <div>
                 <SectionLabel>Recommended Interventions</SectionLabel>
-                <p className="text-[11px] text-[#9CA3AF] mb-3">
+                <p className="text-[11px] text-[var(--intel-text-muted)] mb-3">
                     Ranked by expected impact. Final authority with designated governance bodies.
                 </p>
                 <InterventionCards interventions={displayedInterventions} />
@@ -331,7 +339,9 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
             {/* ── Community Context ── */}
             <div className="border-t border-[#F3F4F6] pt-5">
                 <SectionLabel>Community Context</SectionLabel>
-                <p className="text-[12px] leading-relaxed text-[#6B7280]">{region.communityContext}</p>
+                <p className="text-[12px] leading-relaxed text-[var(--intel-text-secondary)]">
+                    {region.communityContext}
+                </p>
             </div>
 
             {region.watchItems.length > 0 && (
@@ -341,7 +351,7 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                         {region.watchItems.map((item) => (
                             <div
                                 key={item}
-                                className="rounded-[6px] border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-[12px] text-[#374151] flex items-start gap-2"
+                                className="rounded-[6px] border border-[var(--intel-border)] bg-[var(--intel-s1)] px-3 py-2 text-[12px] text-[var(--intel-text-secondary)] flex items-start gap-2"
                             >
                                 <span className="text-[#C7A56B] shrink-0 mt-0.5">◆</span>
                                 {item}

@@ -12,6 +12,12 @@ interface Intervention {
 
 interface InterventionCardsProps {
     interventions: Intervention[];
+    context?: {
+        regionName?: string;
+        thresholdStatus?: string;
+        primaryDriver?: string;
+        thresholdReason?: string;
+    };
 }
 
 const RANK_LABELS = ["1st Priority", "2nd Priority", "3rd Priority", "4th Priority"];
@@ -30,7 +36,7 @@ function confColor(conf: string) {
     return "#6B7280";
 }
 
-export default function InterventionCards({ interventions }: InterventionCardsProps) {
+export default function InterventionCards({ interventions, context }: InterventionCardsProps) {
     const [expanded, setExpanded] = useState<string | null>(interventions[0]?.category ?? null);
 
     if (!interventions.length) {
@@ -56,9 +62,16 @@ export default function InterventionCards({ interventions }: InterventionCardsPr
                                 <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280] w-20 shrink-0 text-right">
                                     {RANK_LABELS[idx] ?? `#${idx + 1}`}
                                 </span>
-                                <span className="text-[14px] font-medium text-[#111111] truncate">
-                                    {item.category}
-                                </span>
+                                <div className="min-w-0">
+                                    <div className="text-[14px] font-medium text-[#111111] truncate">
+                                        {item.category}
+                                    </div>
+                                    <div className="text-[11px] text-[#6B7280] truncate">
+                                        {context?.regionName
+                                            ? `For ${context.regionName}${context.thresholdStatus ? ` — ${context.thresholdStatus}` : ""}`
+                                            : "For the current highest modelled pressure region"}
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                                 <span
@@ -91,6 +104,34 @@ export default function InterventionCards({ interventions }: InterventionCardsPr
                                         <div className="text-[13px] text-[#111111]">{item.timeToEffect}</div>
                                     </div>
                                 </div>
+                                {context?.regionName && (
+                                    <div className="mt-3 grid grid-cols-1 gap-1.5 text-[12px] text-[#4B5563]">
+                                        <div>
+                                            <span className="text-[11px] uppercase tracking-[0.14em] text-[#9CA3AF] mr-1">
+                                                Region
+                                            </span>
+                                            <span className="font-medium text-[#111111]">
+                                                {context.regionName}
+                                            </span>
+                                        </div>
+                                        {context.thresholdStatus && (
+                                            <div>
+                                                <span className="text-[11px] uppercase tracking-[0.14em] text-[#9CA3AF] mr-1">
+                                                    Why Now
+                                                </span>
+                                                <span>{context.thresholdStatus}</span>
+                                            </div>
+                                        )}
+                                        {context.primaryDriver && (
+                                            <div>
+                                                <span className="text-[11px] uppercase tracking-[0.14em] text-[#9CA3AF] mr-1">
+                                                    Primary Driver
+                                                </span>
+                                                <span>{context.primaryDriver}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-1 mt-2">
                                     <span className="text-[11px] text-[#9CA3AF] uppercase tracking-[0.14em]">Confidence:</span>
                                     <span

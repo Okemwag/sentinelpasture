@@ -21,7 +21,18 @@ const COST_DEFINITIONS: Record<string, string> = {
 
 export default function InterventionsPage() {
   const [rows, setRows] = useState<Intervention[]>([]);
-  const [metadata, setMetadata] = useState({ modelVersion: "—", lastUpdated: "—", confidence: "Medium" });
+  const [metadata, setMetadata] = useState<{
+    modelVersion: string;
+    lastUpdated: string;
+    confidence: string;
+    regionName?: string;
+    regionId?: string;
+    riskScore?: number;
+    riskLevel?: string;
+    thresholdStatus?: string;
+    primaryDriver?: string;
+    thresholdReason?: string;
+  }>({ modelVersion: "—", lastUpdated: "—", confidence: "Medium" });
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -33,12 +44,15 @@ export default function InterventionsPage() {
     }).catch((err) => {
       if (!active) return;
       setError(err instanceof Error ? err.message : "Unable to load interventions");
-      setRows(PLACEHOLDER_INTERVENTIONS);
     });
     return () => { active = false; };
   }, []);
 
-  const displayed = rows.length ? rows : PLACEHOLDER_INTERVENTIONS;
+  const hasData = rows.length > 0;
+  const lowCost = rows.filter((r) => r.costBand === "Low").length;
+  const mediumCost = rows.filter((r) => r.costBand === "Medium").length;
+  const highCost = rows.filter((r) => r.costBand === "High").length;
+  const highConfidence = rows.filter((r) => r.confidence === "High").length;
 
   return (
     <div className="max-w-[1400px] mx-auto p-6 space-y-6">
@@ -50,29 +64,94 @@ export default function InterventionsPage() {
         </div>
       )}
 
-      {/* Policy note */}
-      <div className="rounded-[8px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 flex items-start gap-3">
-        <svg className="h-4 w-4 text-[#9CA3AF] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <p className="text-[12px] leading-relaxed text-[#6B7280]">
-          Recommendations are generated from the highest current modelled pressure zone unless a region filter is supplied.
-          Final decision authority remains with designated governance bodies.
-        </p>
+      {/* Policy note + target region context */}
+      <div className="rounded-[8px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 flex flex-col gap-2">
+        <div className="flex items-start gap-3">
+          <svg className="h-4 w-4 text-[#9CA3AF] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-[12px] leading-relaxed text-[#6B7280]">
+            Recommendations are generated from the highest current modelled pressure zone unless a region filter is supplied.
+            Final decision authority remains with designated governance bodies.
+          </p>
+        </div>
+        {metadata.regionName && (
+          <div className="mt-1 rounded-[6px] bg-white border border-[#E5E7EB] px-3 py-2 flex flex-wrap items-start gap-2 text-[12px] text-[#4B5563]">
+            <span className="font-semibold text-[#111827]">
+              Target region: {metadata.regionName}
+            </span>
+            {typeof metadata.riskScore === "number" && (
+              <span className="text-[#6B7280]">
+                · Risk score {Math.round(Number(metadata.riskScore) * 100)}
+              </span>
+            )}
+            {metadata.thresholdStatus && (
+              <span className="text-[#6B7280]">
+                · {metadata.thresholdStatus}
+              </span>
+            )}
+            {metadata.primaryDriver && (
+              <span className="text-[#6B7280]">
+                · Primary driver: {metadata.primaryDriver}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Metadata */}
-      <div className="flex flex-wrap gap-4 text-[12px] text-[#9CA3AF]">
-        <span>Model: {metadata.modelVersion}</span>
-        <span>Updated: {metadata.lastUpdated}</span>
-        <span>Confidence: {metadata.confidence}</span>
+      {/* Metadata + quick takeaway */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-4 text-[12px] text-[#9CA3AF]">
+          <span>Model: {metadata.modelVersion}</span>
+          <span>Updated: {metadata.lastUpdated}</span>
+          <span>Confidence: {metadata.confidence}</span>
+        </div>
+        {hasData && (
+          <div className="text-[13px] text-[#4B5563] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] px-4 py-2">
+            <span className="font-semibold text-[#111827]">
+              {rows.length} ranked options
+            </span>
+            <span>
+              {" "}with a focus on{" "}
+              <strong>{lowCost} low</strong>,{" "}
+              <strong>{mediumCost} medium</strong>, and{" "}
+              <strong>{highCost} high</strong> cost-band interventions;{" "}
+              <strong>{highConfidence}</strong> are high-confidence recommendations.
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         {/* Main card list */}
         <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-5">
-          <h2 className="text-[15px] font-semibold text-[#111111] mb-5">Ranked Intervention Options</h2>
-          <InterventionCards interventions={displayed} />
+          <div className="mb-3">
+            <h2 className="text-[15px] font-semibold text-[#111111]">
+              Ranked Intervention Options
+            </h2>
+            {metadata.regionName && (
+              <p className="mt-1 text-[12px] text-[#6B7280]">
+                For <strong>{metadata.regionName}</strong>
+                {metadata.thresholdStatus && <> — {metadata.thresholdStatus}</>}
+                {metadata.primaryDriver && <> · primary driver: {metadata.primaryDriver}</>}
+              </p>
+            )}
+          </div>
+          {rows.length === 0 ? (
+            <div className="text-[13px] text-[#9CA3AF]">
+              No ranked intervention options are currently available from the model.
+            </div>
+          ) : (
+            <InterventionCards
+              interventions={rows}
+              context={{
+                regionName: metadata.regionName,
+                thresholdStatus: metadata.thresholdStatus,
+                primaryDriver: metadata.primaryDriver,
+                thresholdReason: metadata.thresholdReason,
+              }}
+            />
+          )}
         </div>
 
         {/* Side: cost band definitions */}
@@ -109,17 +188,16 @@ export default function InterventionsPage() {
               <div><strong className="text-[#8C6A3D]">Medium</strong> — Modelled with partial validation</div>
               <div><strong className="text-[#9CA3AF]">Low</strong> — Inferred from incomplete signals</div>
             </div>
+            {hasData && (
+              <p className="mt-3 text-[12px] text-[#6B7280]">
+                Interventions at the top of the list are ranked against the current highest-pressure region,
+                using the same climate, market, mobility, and incident drivers shown on the Drivers page.
+              </p>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-const PLACEHOLDER_INTERVENTIONS: Intervention[] = [
-  { category: "Deploy temporary water points", expectedImpact: "Reduce migration pressure", timeToEffect: "3–5 days", costBand: "Low", confidence: "High" },
-  { category: "Pre-position flood relief supplies", expectedImpact: "Reduce displacement risk", timeToEffect: "7–14 days", costBand: "Medium", confidence: "High" },
-  { category: "Maintain transport corridor clearance", expectedImpact: "Stabilize market supply", timeToEffect: "Immediate", costBand: "Medium", confidence: "Medium" },
-  { category: "Coordinate early warning communication", expectedImpact: "Increase community preparedness", timeToEffect: "1–3 days", costBand: "Low", confidence: "High" },
-  { category: "Deploy livestock support teams", expectedImpact: "Reduce distress livestock sales", timeToEffect: "5–10 days", costBand: "High", confidence: "Medium" },
-];
+// No local placeholder interventions; UI shows explicit empty states when none are available.

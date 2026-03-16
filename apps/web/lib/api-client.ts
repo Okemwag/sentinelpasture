@@ -192,6 +192,17 @@ class ApiClient {
     }>>('/outcomes/chart');
   }
 
+  async getViolenceTimeseries() {
+    return this.request<Array<{
+      date: string;
+      totalEvents: number;
+      totalFatalities: number;
+      demonstrationsEvents: number;
+      civilianTargetingEvents: number;
+      politicalViolenceEvents: number;
+    }>>('/violence/timeseries');
+  }
+
   // Alerts
   async getAlerts() {
     return this.request<Array<{

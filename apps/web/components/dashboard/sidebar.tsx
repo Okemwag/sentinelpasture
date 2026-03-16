@@ -52,10 +52,10 @@ export default function DashboardSidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white border border-[#E5E7EB] rounded-[8px] shadow-sm"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[var(--intel-s0)] border border-[var(--intel-border)] rounded-[10px] shadow-sm"
         aria-label="Toggle menu"
       >
-        <Icon icon={isMobileMenuOpen ? "mdi:close" : "mdi:menu"} className="w-6 h-6 text-[#111111]" />
+        <Icon icon={isMobileMenuOpen ? "mdi:close" : "mdi:menu"} className="w-6 h-6 text-[var(--intel-text-primary)]" />
       </button>
 
       {isMobileMenuOpen && (
@@ -67,35 +67,35 @@ export default function DashboardSidebar() {
 
       <aside
         className={`
-          fixed left-0 top-0 h-screen w-64 bg-white border-r border-[#E5E7EB] z-40
+          fixed left-0 top-0 h-screen w-64 bg-[var(--intel-s0)] border-r border-[var(--intel-border)] z-40
           flex flex-col
           transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[#F3F4F6]">
+        <div className="px-5 py-4 border-b border-[var(--intel-border-subtle)] bg-[var(--intel-s1)]">
           <div className="flex items-center gap-2.5">
-            <div className="relative flex items-center justify-center w-8 h-8 rounded-[6px] bg-[#F3F4F6]">
-              <Icon icon="mdi:shield-check-outline" className="w-5 h-5 text-[#374151]" />
+            <div className="relative flex items-center justify-center w-8 h-8 rounded-[6px] bg-[var(--intel-s0)] border border-[var(--intel-border-subtle)]">
+              <Icon icon="mdi:shield-check-outline" className="w-5 h-5 text-[var(--intel-text-primary)]" />
               {/* Live pulse dot */}
               <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                <span className="animate-live absolute inline-flex h-full w-full rounded-full bg-[#3A6B33] opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#3A6B33]" />
+                <span className="animate-live absolute inline-flex h-full w-full rounded-full bg-[#2F7A37] opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#2F7A37]" />
               </span>
             </div>
             <div>
-              <div className="text-[13px] font-semibold text-[#111111] leading-tight">
+              <div className="text-[13px] font-semibold text-[var(--intel-text-primary)] leading-tight">
                 National Risk Intel
               </div>
-              <div className="text-[10px] text-[#9CA3AF] tracking-widest uppercase">
+              <div className="text-[10px] text-[var(--intel-text-muted)] tracking-[0.24em] uppercase">
                 Resilience Platform
               </div>
             </div>
           </div>
           {/* Live clock */}
           {time && (
-            <div className="mt-2.5 text-[11px] font-mono text-[#9CA3AF] tracking-wider px-1">
+            <div className="mt-2.5 text-[11px] font-mono text-[var(--intel-text-muted)] tracking-[0.18em] px-1">
               {time}
             </div>
           )}
@@ -103,7 +103,7 @@ export default function DashboardSidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-3 overflow-y-auto">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF] px-3 mb-2">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--intel-text-muted)] px-3 mb-2">
             Intelligence
           </div>
           {NAVIGATION.slice(0, 5).map((item) => (
@@ -114,7 +114,7 @@ export default function DashboardSidebar() {
               onClick={() => setIsMobileMenuOpen(false)}
             />
           ))}
-          <div className="text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF] px-3 mt-4 mb-2">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--intel-text-muted)] px-3 mt-4 mb-2">
             Management
           </div>
           {NAVIGATION.slice(5).map((item) => (
@@ -128,22 +128,22 @@ export default function DashboardSidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-[#F3F4F6] px-4 py-3">
+        <div className="border-t border-[var(--intel-border-subtle)] px-4 py-3 bg-[var(--intel-s1)]">
           <div className="flex items-center gap-2.5 px-1 mb-2.5">
-            <div className="w-7 h-7 rounded-full bg-[#F3F4F6] flex items-center justify-center shrink-0">
-              <Icon icon="mdi:account-outline" className="w-4 h-4 text-[#6B7280]" />
+            <div className="w-7 h-7 rounded-full bg-[var(--intel-s0)] border border-[var(--intel-border-subtle)] flex items-center justify-center shrink-0">
+              <Icon icon="mdi:account-outline" className="w-4 h-4 text-[var(--intel-text-secondary)]" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[12px] font-medium text-[#111111] truncate">
+              <div className="text-[12px] font-medium text-[var(--intel-text-primary)] truncate">
                 {identity.full_name}
               </div>
-              <div className="text-[10px] text-[#9CA3AF]">{identity.role}</div>
+              <div className="text-[10px] text-[var(--intel-text-muted)]">{identity.role}</div>
             </div>
           </div>
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[12px] text-[#6B7280] border border-[#E5E7EB] rounded-[8px] hover:bg-[#F9FAFB] transition-colors"
+            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[12px] text-[var(--intel-text-secondary)] border border-[var(--intel-border)] rounded-[8px] hover:bg-[var(--intel-s2)] transition-colors"
           >
             <Icon icon="mdi:logout" className="w-4 h-4" />
             <span>Sign Out</span>

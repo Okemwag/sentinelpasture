@@ -88,54 +88,7 @@ function RiskBar({ label, value, max = 100 }: { label: string; value: number; ma
   );
 }
 
-const PLACEHOLDER_OUTCOMES: Outcome[] = [
-  {
-    intervention: "Emergency water point deployment — North Eastern Drylands",
-    deployed: "2024-02-14",
-    riskBefore: 78,
-    riskAfter: 58,
-    trend: "Declining",
-    commentary: "Deployment of 12 temporary water points in North Eastern Drylands reduced pastoral migration pressure. Livestock distress sales decreased by 34% in the 3 weeks following intervention.",
-  },
-  {
-    intervention: "Transport corridor clearance — Coast Belt",
-    deployed: "2024-01-28",
-    riskBefore: 61,
-    riskAfter: 45,
-    trend: "Stable",
-    commentary: "Pre-clearing of the Mombasa–Malindi coastal route stabilized market supply chains. Food price volatility in Coast Belt dropped from +18% to +4% above baseline within 2 weeks.",
-  },
-  {
-    intervention: "Early warning communication — South Rift Valley",
-    deployed: "2024-03-01",
-    riskBefore: 52,
-    riskAfter: 44,
-    trend: "Declining",
-    commentary: "Community-level early warning messaging in South Rift Valley increased pastoral route coordination. Inter-community conflict mediation requests dropped 22%.",
-  },
-  {
-    intervention: "Flood relief pre-positioning — Lake Basin Region",
-    deployed: "2024-02-20",
-    riskBefore: 67,
-    riskAfter: 53,
-    trend: "Declining",
-    commentary: "Pre-positioned flood relief supplies in Lake Basin Region allowed faster response when flooding exceeded thresholds. Displacement numbers were 31% lower than 2022 comparable event.",
-  },
-  {
-    intervention: "Livestock support teams — North West Frontier",
-    deployed: "2024-01-15",
-    riskBefore: 55,
-    riskAfter: 60,
-    trend: "Increasing",
-    commentary: "Livestock support team deployment in North West Frontier did not reduce risk as expected because secondary drought conditions intensified after deployment. Escalation protocol triggered.",
-  },
-];
-
-const PLACEHOLDER_CHART: ChartPoint[] = Array.from({ length: 12 }, (_, i) => {
-  const d = new Date("2024-01-01");
-  d.setDate(d.getDate() + i * 7);
-  return { date: d.toISOString().slice(0, 10), value: Math.max(25, 75 - i * 4 + (i % 3 === 0 ? 6 : -3)) };
-});
+// No local placeholder outcomes or charts; UI shows explicit empty states when none are available.
 
 export default function OutcomesPage() {
   const [rows, setRows] = useState<Outcome[]>([]);
@@ -158,25 +111,22 @@ export default function OutcomesPage() {
           intervention: resolveRegionName(o.intervention),
           commentary: cleanCommentary(o.commentary),
         }));
-        setRows(cleaned.length ? cleaned : PLACEHOLDER_OUTCOMES);
-        setChartData(chartResp.data.length ? chartResp.data : PLACEHOLDER_CHART);
+        setRows(cleaned);
+        setChartData(chartResp.data);
         if (outcomesResp.metadata) setMetadata(outcomesResp.metadata);
       } catch {
         if (!active) return;
-        setRows(PLACEHOLDER_OUTCOMES);
-        setChartData(PLACEHOLDER_CHART);
-        setError("Live data unavailable — showing modelled baseline outcomes");
+        setError("Live data unavailable — no outcomes could be retrieved from the model.");
       }
     }
     void load();
     return () => { active = false; };
   }, []);
 
-  const displayed = rows.length ? rows : PLACEHOLDER_OUTCOMES;
-  const improved = displayed.filter((o) => o.riskAfter < o.riskBefore).length;
-  const worsened = displayed.filter((o) => o.riskAfter >= o.riskBefore).length;
-  const avgDelta = displayed.length
-    ? Math.round(displayed.reduce((s, o) => s + (o.riskBefore - o.riskAfter), 0) / displayed.length)
+  const improved = rows.filter((o) => o.riskAfter < o.riskBefore).length;
+  const worsened = rows.filter((o) => o.riskAfter >= o.riskBefore).length;
+  const avgDelta = rows.length
+    ? Math.round(rows.reduce((s, o) => s + (o.riskBefore - o.riskAfter), 0) / rows.length)
     : 0;
 
   return (
@@ -192,7 +142,7 @@ export default function OutcomesPage() {
       {/* Summary stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { icon: "mdi:check-circle-outline", label: "Interventions Tracked", value: String(displayed.length), color: "#6B7280", bg: "#F3F4F6" },
+          { icon: "mdi:check-circle-outline", label: "Interventions Tracked", value: String(rows.length), color: "#6B7280", bg: "#F3F4F6" },
           { icon: "mdi:trending-down", label: "Risk Reduced", value: String(improved), note: "regions improved", color: "#2A5B28", bg: "#EDF4EB" },
           { icon: "mdi:trending-up", label: "Not Effective", value: String(worsened), note: "require review", color: "#5A3E1E", bg: "#F5EFE6" },
           { icon: "mdi:chart-bar-stacked", label: "Avg. Risk Reduction", value: `${avgDelta} pts`, note: "across all interventions", color: "#374151", bg: "#F9FAFB" },
@@ -222,7 +172,13 @@ export default function OutcomesPage() {
             <span>Updated: {metadata.lastUpdated}</span>
           </div>
         </div>
-        <LineChart data={chartData.length ? chartData : PLACEHOLDER_CHART} height={200} />
+        {chartData.length === 0 ? (
+          <div className="h-[200px] flex items-center justify-center text-[13px] text-[#9CA3AF]">
+            No national trend series is currently available from the model.
+          </div>
+        ) : (
+          <LineChart data={chartData} height={200} />
+        )}
       </div>
 
       {/* Outcome cards */}
@@ -230,8 +186,13 @@ export default function OutcomesPage() {
         <div className="border-b border-[#F3F4F6] px-5 py-3">
           <h2 className="text-[15px] font-semibold text-[#111111]">Deployed Intervention Records</h2>
         </div>
+        {rows.length === 0 ? (
+          <div className="px-5 py-6 text-[13px] text-[#9CA3AF]">
+            No deployed intervention records are currently available from the model.
+          </div>
+        ) : (
         <div className="divide-y divide-[#F9FAFB]">
-          {displayed.map((outcome, idx) => {
+          {rows.map((outcome, idx) => {
             const improved = outcome.riskAfter < outcome.riskBefore;
             const deployDate = new Date(outcome.deployed).toLocaleDateString("en-US", {
               year: "numeric", month: "short", day: "numeric",
@@ -281,6 +242,7 @@ export default function OutcomesPage() {
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );

@@ -25,32 +25,20 @@ type StabilityData = {
 type ChartPoint = { date: string; value: number };
 type RegionComparison = { region: string; riskScore: number; riskLevel: string };
 
-function formatTime(value: string) {
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
-  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+function fmt(iso: string, mode: "time" | "date") {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return mode === "time"
+    ? d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function formatDate(value: string) {
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-const TREND_ICONS = {
-  up: "mdi:trending-up",
-  down: "mdi:trending-down",
-  stable: "mdi:trending-neutral",
-};
-
-function TrendLabel({ trend, value }: { trend: "up" | "down" | "stable"; value: number }) {
-  const color = trend === "up" ? "#8C6A3D" : trend === "down" ? "#3A6B33" : "#6B7280";
-  return (
-    <span className="flex items-center gap-1 text-[11px]" style={{ color }}>
-      <Icon icon={TREND_ICONS[trend]} className="h-3.5 w-3.5" />
-      {Math.round(value)}
-    </span>
-  );
+function TrendIcon({ trend }: { trend: "up" | "down" | "stable" }) {
+  return trend === "up"
+    ? <Icon icon="mdi:trending-up" className="h-3.5 w-3.5 text-[var(--intel-risk-elevated)]" />
+    : trend === "down"
+      ? <Icon icon="mdi:trending-down" className="h-3.5 w-3.5 text-[var(--intel-risk-low)]" />
+      : <Icon icon="mdi:minus" className="h-3.5 w-3.5 text-[var(--intel-text-muted)]" />;
 }
 
 export default function DashboardOverview() {
@@ -62,15 +50,13 @@ export default function DashboardOverview() {
   const [meta, setMeta] = useState({ lastUpdated: "Loading…", modelVersion: "—" });
 
   useEffect(() => {
-    Promise.all([apiClient.getQuickStats(), apiClient.getStabilityIndex()]).then(
-      ([s, stab]) => {
+    Promise.all([apiClient.getQuickStats(), apiClient.getStabilityIndex()])
+      .then(([s, stab]) => {
         setStats(s.data);
         setStability(stab.data);
         setMeta(stab.metadata ?? { lastUpdated: "—", modelVersion: "—", confidence: "Medium" });
-      }
-    ).catch(() => {
-      // Use fallback values silently
-    });
+      })
+      .catch(() => { });
 
     apiClient.getOutcomesChart().then((r) => setTrendData(r.data)).catch(() => { });
 
@@ -79,11 +65,7 @@ export default function DashboardOverview() {
         .slice()
         .sort((a, b) => b.riskScore - a.riskScore)
         .slice(0, 8)
-        .map((d) => ({
-          region: d.region,
-          riskScore: d.riskScore,
-          riskLevel: d.riskLevel,
-        }));
+        .map((d) => ({ region: d.region, riskScore: d.riskScore, riskLevel: d.riskLevel }));
       setComparisonData(top);
     }).catch(() => { });
   }, []);
@@ -92,155 +74,197 @@ export default function DashboardOverview() {
     setSelectedRegion(region);
   }, []);
 
-  const stabilityScore = stability?.value ?? 0;
-  const stabilityColor =
-    stabilityScore >= 70 ? "#4A3A26" : stabilityScore >= 50 ? "#8C6A3D" : stabilityScore >= 30 ? "#C7A56B" : "#7A9B70";
+  const score = stability?.value ?? 0;
+  const scoreColor =
+    score >= 70
+      ? "var(--intel-risk-critical)"
+      : score >= 50
+        ? "var(--intel-risk-elevated)"
+        : score >= 30
+          ? "var(--intel-risk-watch)"
+          : "var(--intel-risk-low)";
 
   return (
-    <div className="flex flex-col gap-0 bg-[#F7F7F5] min-h-screen">
+    <div
+      className="flex flex-col bg-[var(--intel-bg)]"
+      style={{ minHeight: "100vh" }}
+    >
 
-      {/* ═══════════════ TOP BAR ═══════════════ */}
-      <div className="border-b border-[#E5E7EB] bg-white px-6 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-[16px] font-semibold text-[#111111]">National Stability Overview</h1>
-            <div className="flex items-center gap-3 mt-0.5">
-              <span className="text-[12px] text-[#9CA3AF]">Model: {meta.modelVersion}</span>
-              <span className="text-[12px] text-[#9CA3AF]">Updated: {formatDate(meta.lastUpdated)}</span>
-              <span className="flex items-center gap-1.5 text-[12px] text-[#3A6B33]">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-live absolute inline-flex h-full w-full rounded-full bg-[#3A6B33] opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#3A6B33]" />
+      {/* ══ TOP BAR ══ */}
+      <div className="shrink-0 bg-[var(--intel-s0)] border-b border-[var(--intel-border)] px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Left: title + subtitle */}
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-semibold tracking-tight text-[var(--intel-text-primary)]">
+                National Stability Overview
+              </h1>
+              <span className="hidden sm:inline-flex rounded-full bg-[var(--intel-s1)] px-2 py-0.5 text-[10px] font-medium text-[var(--intel-text-muted)]">
+                Governance Early-Warning Surface
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] text-[var(--intel-text-muted)]">
+              <span className="hidden sm:inline-flex items-center gap-1">
+                <span className="font-medium">{meta.modelVersion}</span>
+                <span className="h-3 w-px bg-[var(--intel-border-subtle)]" />
+                <span>{fmt(meta.lastUpdated, "date")}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-[#2F7A37]">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-live absolute inline-flex h-full w-full rounded-full bg-[#2F7A37] opacity-70" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#2F7A37]" />
                 </span>
-                Live
+                Live model feed
               </span>
             </div>
           </div>
 
-          {/* Stat cards inline */}
-          <div className="flex flex-wrap gap-3">
-            {[
-              {
-                label: "Stability Index",
-                value: stability ? String(Math.round(stability.value)) : "—",
-                sub: stability ? <TrendLabel trend={stability.trend} value={stability.value} /> : null,
-                icon: "mdi:shield-check-outline",
-                color: stabilityColor,
-              },
-              {
-                label: "Active Alerts",
-                value: stats ? String(stats.activeAlerts) : "—",
-                sub: <span className="text-[11px] text-[#6B7280]">Requires attention</span>,
-                icon: "mdi:alert-circle-outline",
-                color: stats && stats.activeAlerts > 3 ? "#8C6A3D" : "#6B7280",
-              },
-              {
-                label: "Regions Monitored",
-                value: stats ? String(stats.regionsMonitored) : "—",
-                sub: <span className="text-[11px] text-[#6B7280]">Active snapshots</span>,
-                icon: "mdi:map-marker-multiple-outline",
-                color: "#6B7280",
-              },
-              {
-                label: "Data Sources",
-                value: stats ? String(stats.dataSources) : "—",
-                sub: <span className="text-[11px] text-[#6B7280]">Feature inputs</span>,
-                icon: "mdi:database-outline",
-                color: "#6B7280",
-              },
-              {
-                label: "Last Update",
-                value: stats ? formatTime(stats.lastUpdate) : "—",
-                sub: <span className="text-[11px] text-[#6B7280]">{stats ? formatDate(stats.lastUpdate) : ""}</span>,
-                icon: "mdi:clock-outline",
-                color: "#6B7280",
-              },
-            ].map((card) => (
-              <div
-                key={card.label}
-                className="flex items-center gap-3 bg-white border border-[#E5E7EB] rounded-[8px] px-4 py-2.5 min-w-[120px]"
-              >
-                <Icon icon={card.icon} className="h-5 w-5 shrink-0" style={{ color: card.color }} />
-                <div>
-                  <div className="text-[11px] text-[#9CA3AF]">{card.label}</div>
-                  <div className="text-[18px] font-semibold leading-tight text-[#111111]">
-                    {card.value}
-                  </div>
-                  <div>{card.sub}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════ MAP + INTEL PANEL ═══════════════ */}
-      <div className="flex flex-1 overflow-hidden" style={{ minHeight: "calc(100vh - 280px)" }}>
-
-        {/* Map — 65% */}
-        <div className="relative flex flex-col flex-65 min-w-0 border-r border-[#E5E7EB] bg-white p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.2em] text-[#9CA3AF]">Kenya Risk Surface</div>
-              <div className="text-[13px] text-[#374151] mt-0.5">
-                {selectedRegion
-                  ? `Viewing: ${selectedRegion.name}`
-                  : "Click a region to open intelligence analysis"}
-              </div>
-            </div>
-            {selectedRegion && (
-              <div
-                className="text-[12px] px-2.5 py-1 rounded-full border font-medium animate-fade-in"
-                style={{
-                  backgroundColor: selectedRegion.riskLevel === "critical" ? "#EDE8E0"
-                    : selectedRegion.riskLevel === "elevated" ? "#F5EFE6"
-                      : selectedRegion.riskLevel === "watch" ? "#FBF5EB"
-                        : "#EDF4EB",
-                  color: selectedRegion.riskLevel === "critical" ? "#2A1E12"
-                    : selectedRegion.riskLevel === "elevated" ? "#5A3E1E"
-                      : selectedRegion.riskLevel === "watch" ? "#7A4F1E"
-                        : "#3A6B33",
-                  borderColor: "#D1D5DB",
-                }}
-              >
-                Score {Math.round(selectedRegion.riskScore * 100)} · {selectedRegion.confidence} confidence
-              </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <RiskMap
-              onRegionSelect={handleRegionSelect}
-              selectedRegionId={selectedRegion?.id}
+          {/* Right: compact stat chips */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <StatChip
+              icon="mdi:shield-check-outline"
+              label="National stability index"
+              value={stability ? String(Math.round(stability.value)) : "—"}
+              color={scoreColor}
+              emphasis
+            >
+              {stability && <TrendIcon trend={stability.trend} />}
+            </StatChip>
+            <StatChip
+              icon="mdi:bell-outline"
+              label="Active alerts"
+              value={String(stats?.activeAlerts ?? "—")}
+              color="var(--intel-risk-elevated)"
+            />
+            <StatChip
+              icon="mdi:map-marker-multiple-outline"
+              label="Regions monitored"
+              value={String(stats?.regionsMonitored ?? "—")}
+              color="var(--intel-text-secondary)"
+            />
+            <StatChip
+              icon="mdi:database-outline"
+              label="Data sources"
+              value={String(stats?.dataSources ?? "—")}
+              color="var(--intel-text-secondary)"
+            />
+            <StatChip
+              icon="mdi:clock-outline"
+              label="Last updated"
+              value={stats ? fmt(stats.lastUpdate, "time") : "—"}
+              color="var(--intel-text-secondary)"
             />
           </div>
         </div>
+      </div>
 
-        {/* Intelligence Panel — 35% */}
-        <div
-          className="flex-35 min-w-[300px] max-w-[440px] bg-white border-l border-[#E5E7EB] overflow-hidden flex flex-col"
-        >
-          <div className="border-b border-[#F3F4F6] px-5 py-3 flex items-center justify-between shrink-0">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-[#9CA3AF] font-semibold">
-              Intelligence Analysis
+      {/* ══ MAP + INTEL PANEL (content area) ══ */}
+      <div className="flex-1">
+        <div className="max-w-[1400px] mx-auto px-5 py-4">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] items-start">
+            {/* Map card */}
+            <div className="bg-[var(--intel-s0)] border border-[var(--intel-border)] rounded-[10px] overflow-hidden">
+              {/* Map header */}
+              <div className="px-5 pt-4 pb-3 space-y-2 border-b border-[var(--intel-border-subtle)]">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--intel-text-muted)]">
+                      Kenya Risk Surface
+                    </div>
+                    <div className="text-[12px] text-[var(--intel-text-secondary)] mt-0.5">
+                      {selectedRegion
+                        ? `Active: ${selectedRegion.name}`
+                        : "Click a region to open intelligence analysis"}
+                    </div>
+                  </div>
+                  {selectedRegion && (
+                    <div className="text-[11px] px-2.5 py-1 rounded-full border border-[var(--intel-border)] bg-[var(--intel-s1)] text-[var(--intel-text-secondary)] animate-fade-in">
+                      Score {Math.round(selectedRegion.riskScore * 100)} · {selectedRegion.confidence} confidence
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-[10px] text-[var(--intel-text-muted)]">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--intel-risk-low)" }} />
+                    Low
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--intel-risk-watch)" }} />
+                    Watch
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--intel-risk-elevated)" }} />
+                    Elevated
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--intel-risk-critical)" }} />
+                    Critical
+                  </span>
+                  <span className="ml-auto text-[10px] text-[var(--intel-text-muted)] hidden sm:inline">
+                    Index scaled 0–100 across monitored regions.
+                  </span>
+                </div>
+              </div>
+
+              {/* Map body */}
+              <div className="px-5 pb-5 pt-3">
+                <div className="w-full min-h-[340px]">
+                  <RiskMap
+                    onRegionSelect={handleRegionSelect}
+                    selectedRegionId={selectedRegion?.id}
+                  />
+                </div>
+              </div>
             </div>
-            {selectedRegion && (
-              <span className="text-[11px] text-[#9CA3AF]">auto-updates on click</span>
-            )}
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <IntelligencePanel region={selectedRegion} />
+
+            {/* Intelligence panel card */}
+            <div className="bg-[var(--intel-s0)] border border-[var(--intel-border)] rounded-[10px] shadow-[0_0_0_1px_rgba(15,23,42,0.02)]">
+              <div className="px-5 py-3 border-b border-[var(--intel-border-subtle)] bg-[var(--intel-s1)] flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--intel-text-muted)]">
+                  Intelligence Analysis
+                </span>
+                {selectedRegion && (
+                  <span className="text-[10px] text-[var(--intel-text-muted)]">
+                    updates on click
+                  </span>
+                )}
+              </div>
+              <IntelligencePanel region={selectedRegion} />
+            </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* ═══════════════ BOTTOM ANALYTICS ═══════════════ */}
-      <div className="border-t border-[#E5E7EB] bg-[#F7F7F5] px-4 py-3">
-        <AnalyticsStrip
-          trendData={trendData}
-          comparisonData={comparisonData}
-          selectedRegionName={selectedRegion?.name}
-        />
-      </div>
+function StatChip({
+  icon,
+  label,
+  value,
+  color,
+  emphasis = false,
+  children
+}: {
+  icon: string;
+  label: string;
+  value: string;
+  color: string;
+  emphasis?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 bg-[var(--intel-s0)] border ${
+        emphasis ? "border-[var(--intel-border)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]" : "border-[var(--intel-border-subtle)]"
+      }`}
+    >
+      <Icon icon={icon} className="h-3.5 w-3.5 shrink-0" style={{ color }} />
+      <span className="text-[10px] text-[var(--intel-text-muted)]">{label}</span>
+      <span className={`font-semibold text-[var(--intel-text-primary)] ${emphasis ? "text-[14px]" : "text-[13px]"}`}>
+        {value}
+      </span>
+      {children}
     </div>
   );
 }

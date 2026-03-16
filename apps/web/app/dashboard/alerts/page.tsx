@@ -124,8 +124,13 @@ export default function AlertsPage() {
         <div className="border-b border-[#F3F4F6] px-5 py-3">
           <h2 className="text-[15px] font-medium text-[#111111]">Recent Alerts</h2>
         </div>
+        {alerts.length === 0 ? (
+          <div className="px-5 py-6 text-[13px] text-[#9CA3AF]">
+            No active alerts are currently registered from the model.
+          </div>
+        ) : (
         <div className="divide-y divide-[#F3F4F6]">
-          {(alerts.length ? alerts : PLACEHOLDER_ALERTS).map((alert) => {
+          {alerts.map((alert) => {
             const sev = SEVERITY_CONFIG[alert.severity];
             const st = STATUS_CONFIG[alert.status];
             const score = urgencyScore(alert);
@@ -179,6 +184,7 @@ export default function AlertsPage() {
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );
@@ -215,32 +221,4 @@ function buildTimeline(alerts: AlertRow[]) {
   return days;
 }
 
-const PLACEHOLDER_ALERTS: AlertRow[] = [
-  {
-    id: 1,
-    severity: "elevated",
-    title: "Flood Risk Escalation — North Eastern Drylands",
-    description: "Satellite rainfall anomaly at +210% above seasonal norm. River overflow indicators active.",
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    region: "North Eastern Drylands",
-    status: "active",
-  },
-  {
-    id: 2,
-    severity: "moderate",
-    title: "Livestock Movement Spike — Coast Belt",
-    description: "Abnormal pastoral migration patterns detected. Market disruption risk elevating.",
-    timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-    region: "Coast Belt",
-    status: "monitoring",
-  },
-  {
-    id: 3,
-    severity: "moderate",
-    title: "Water Point Pressure — South Rift Valley",
-    description: "Local mediation requests increasing. Water access stress above seasonal baseline.",
-    timestamp: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
-    region: "South Rift Valley",
-    status: "monitoring",
-  },
-];
+// No local placeholder alerts; UI shows an explicit empty state when none are available.

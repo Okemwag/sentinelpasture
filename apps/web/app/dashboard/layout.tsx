@@ -19,11 +19,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${inter.variable} font-sans`}>
+    <div className={`${inter.variable} font-sans min-h-screen bg-[#F4F4F2]`}>
       <AuthGate>
-        <div className="flex min-h-screen bg-[#F7F7F5]">
+        <div className="flex min-h-screen">
           <DashboardSidebar />
-          <main className="flex-1 lg:ml-64 w-full min-w-0 overflow-hidden">
+          {/* Sidebar is fixed-width 256px via the sidebar component; push content right */}
+          <main className="flex-1 min-w-0" style={{ marginLeft: 256 }}>
             {children}
           </main>
         </div>

@@ -50,7 +50,7 @@ export default function RegionalRiskPage() {
       {/* Map */}
       <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-5">
         <h2 className="text-[15px] font-semibold text-[#111111] mb-4">Regional Risk Distribution</h2>
-        <div style={{ height: 480 }}>
+        <div className="relative w-full" style={{ minHeight: 420 }}>
           <RiskMap />
         </div>
       </div>
@@ -64,6 +64,11 @@ export default function RegionalRiskPage() {
             <span>Updated: {metadata.lastUpdated}</span>
           </div>
         </div>
+        {rows.length === 0 ? (
+          <div className="px-5 py-6 text-[13px] text-[#9CA3AF]">
+            No regional briefings are currently available from the model.
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[768px]">
             <thead>
@@ -74,7 +79,7 @@ export default function RegionalRiskPage() {
               </tr>
             </thead>
             <tbody>
-              {(rows.length ? rows : PLACEHOLDER_ROWS).map((region) => {
+              {rows.map((region) => {
                 const pal = getRiskPalette(region.riskLevel);
                 return (
                   <tr
@@ -111,15 +116,10 @@ export default function RegionalRiskPage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </div>
   );
 }
 
-const PLACEHOLDER_ROWS: RegionRow[] = [
-  { region: "North Eastern Drylands", population: "841,000", stabilityIndex: 28, trend: "Increasing", thresholdStatus: "High threshold crossed", riskScore: 0.74, riskLevel: "elevated", primaryDriver: "Rainfall anomaly", storySummary: "Flood risk affecting pastoral routes and market access.", confidence: "Medium" },
-  { region: "Coast Belt", population: "1,100,000", stabilityIndex: 44, trend: "Stable", thresholdStatus: "Watch threshold", riskScore: 0.44, riskLevel: "watch", primaryDriver: "Radicalization corridors", storySummary: "Long-standing risk corridors under monitoring.", confidence: "Medium" },
-  { region: "South Rift Valley", population: "630,000", stabilityIndex: 47, trend: "Stable", thresholdStatus: "Watch threshold", riskScore: 0.41, riskLevel: "watch", primaryDriver: "Livestock theft", storySummary: "Seasonal tension in pastoral zones.", confidence: "Medium" },
-  { region: "Central Highlands", population: "1,200,000", stabilityIndex: 82, trend: "Stable", thresholdStatus: "Below threshold", riskScore: 0.18, riskLevel: "low", primaryDriver: "Political sensitivity", storySummary: "Stable. Monitor election-period indicators.", confidence: "High" },
-  { region: "Nairobi Metro", population: "4,400,000", stabilityIndex: 78, trend: "Stable", thresholdStatus: "Below threshold", riskScore: 0.22, riskLevel: "low", primaryDriver: "Urban unrest risk", storySummary: "Stable. Cost-of-living triggers being monitored.", confidence: "High" },
-];
+// No local placeholder regional rows; UI shows an explicit empty state when none are available.
