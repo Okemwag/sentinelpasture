@@ -88,7 +88,7 @@ export default function DashboardSidebar() {
               <div className="text-[13px] font-semibold text-[#111111] leading-tight">
                 National Risk Intel
               </div>
-              <div className="text-[10px] text-[#9CA3AF] tracking-[0.1em] uppercase">
+              <div className="text-[10px] text-[#9CA3AF] tracking-widest uppercase">
                 Resilience Platform
               </div>
             </div>
@@ -130,7 +130,7 @@ export default function DashboardSidebar() {
         {/* Footer */}
         <div className="border-t border-[#F3F4F6] px-4 py-3">
           <div className="flex items-center gap-2.5 px-1 mb-2.5">
-            <div className="w-7 h-7 rounded-full bg-[#F3F4F6] flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[#F3F4F6] flex items-center justify-center shrink-0">
               <Icon icon="mdi:account-outline" className="w-4 h-4 text-[#6B7280]" />
             </div>
             <div className="min-w-0 flex-1">
@@ -183,7 +183,7 @@ function NavItem({
       {isActive && (
         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#374151] rounded-r-full" />
       )}
-      <Icon icon={icon} className="w-4 h-4 flex-shrink-0" />
+      <Icon icon={icon} className="w-4 h-4 shrink-0" />
       <span>{label}</span>
     </Link>
   );

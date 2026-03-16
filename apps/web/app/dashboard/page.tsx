@@ -160,7 +160,7 @@ export default function DashboardOverview() {
                 key={card.label}
                 className="flex items-center gap-3 bg-white border border-[#E5E7EB] rounded-[8px] px-4 py-2.5 min-w-[120px]"
               >
-                <Icon icon={card.icon} className="h-5 w-5 flex-shrink-0" style={{ color: card.color }} />
+                <Icon icon={card.icon} className="h-5 w-5 shrink-0" style={{ color: card.color }} />
                 <div>
                   <div className="text-[11px] text-[#9CA3AF]">{card.label}</div>
                   <div className="text-[18px] font-semibold leading-tight text-[#111111]">
@@ -178,7 +178,7 @@ export default function DashboardOverview() {
       <div className="flex flex-1 overflow-hidden" style={{ minHeight: "calc(100vh - 280px)" }}>
 
         {/* Map — 65% */}
-        <div className="relative flex flex-col flex-[65] min-w-0 border-r border-[#E5E7EB] bg-white p-5">
+        <div className="relative flex flex-col flex-65 min-w-0 border-r border-[#E5E7EB] bg-white p-5">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <div className="text-[11px] uppercase tracking-[0.2em] text-[#9CA3AF]">Kenya Risk Surface</div>
@@ -217,9 +217,9 @@ export default function DashboardOverview() {
 
         {/* Intelligence Panel — 35% */}
         <div
-          className="flex-[35] min-w-[300px] max-w-[440px] bg-white border-l border-[#E5E7EB] overflow-hidden flex flex-col"
+          className="flex-35 min-w-[300px] max-w-[440px] bg-white border-l border-[#E5E7EB] overflow-hidden flex flex-col"
         >
-          <div className="border-b border-[#F3F4F6] px-5 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="border-b border-[#F3F4F6] px-5 py-3 flex items-center justify-between shrink-0">
             <div className="text-[11px] uppercase tracking-[0.2em] text-[#9CA3AF] font-semibold">
               Intelligence Analysis
             </div>

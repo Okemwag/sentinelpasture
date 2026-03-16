@@ -136,9 +136,9 @@ export default function AlertsPage() {
                 style={{ borderLeft: `3px solid ${sev.border}` }}
               >
                 {/* Severity dot column */}
-                <div className="flex flex-col items-center px-4 pt-4 pb-4 flex-shrink-0">
+                <div className="flex flex-col items-center px-4 pt-4 pb-4 shrink-0">
                   <Icon icon={sev.icon} className="h-5 w-5" style={{ color: sev.dot }} />
-                  <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: sev.dot }}>
+                  <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: sev.dot }}>
                     {sev.label}
                   </div>
                 </div>
@@ -147,10 +147,10 @@ export default function AlertsPage() {
                 <div className="flex-1 min-w-0 py-4 pr-4">
                   <div className="flex items-start justify-between gap-3 mb-1">
                     <h3 className="text-[14px] font-semibold text-[#111111]">{alert.title}</h3>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       {/* Urgency score */}
                       <div className="text-right">
-                        <div className="text-[10px] text-[#9CA3AF] uppercase tracking-[0.1em]">Urgency</div>
+                        <div className="text-[10px] text-[#9CA3AF] uppercase tracking-widest">Urgency</div>
                         <div className="text-[14px] font-bold" style={{ color: score >= 70 ? "#4A3A26" : score >= 50 ? "#8C6A3D" : "#C7A56B" }}>
                           {score}
                         </div>
@@ -189,7 +189,7 @@ function StatCard({ icon, label, value, note, color, bg }: {
 }) {
   return (
     <div className="rounded-[8px] border border-[#E5E7EB] bg-white p-4 flex items-center gap-4">
-      <div className="h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0"
+      <div className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
         style={{ backgroundColor: bg }}>
         <Icon icon={icon} className="h-5 w-5" style={{ color }} />
       </div>

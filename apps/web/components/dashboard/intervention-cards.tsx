@@ -53,14 +53,14 @@ export default function InterventionCards({ interventions }: InterventionCardsPr
                             className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[#FAFAFA] transition-colors"
                         >
                             <div className="flex items-center gap-3 min-w-0">
-                                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280] w-20 flex-shrink-0 text-right">
+                                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280] w-20 shrink-0 text-right">
                                     {RANK_LABELS[idx] ?? `#${idx + 1}`}
                                 </span>
                                 <span className="text-[14px] font-medium text-[#111111] truncate">
                                     {item.category}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-2 shrink-0">
                                 <span
                                     className="text-[11px] px-2 py-0.5 rounded-full border font-medium"
                                     style={{ backgroundColor: cost.bg, color: cost.text, borderColor: cost.border }}

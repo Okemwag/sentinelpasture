@@ -93,8 +93,8 @@ export default function LineChart({
       style={{ maxWidth: "100%" }}
     >
       {/* Grid lines */}
-      {yLabels.map(({ y, val }) => (
-        <g key={val}>
+      {yLabels.map(({ y, val }, index) => (
+        <g key={index}>
           <line
             x1={padLeft}
             y1={y}

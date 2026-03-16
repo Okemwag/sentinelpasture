@@ -221,7 +221,7 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                         </span>
                         <h2 className="mt-2 text-[20px] font-semibold text-[#111111] leading-tight">{region.name}</h2>
                     </div>
-                    <div className="text-right flex-shrink-0">
+                    <div className="text-right shrink-0">
                         <div className="text-[11px] uppercase tracking-[0.16em] text-[#9CA3AF]">Risk Score</div>
                         <div className="text-[28px] font-bold leading-none mt-0.5" style={{ color: palette.textColor }}>
                             {Math.round(region.riskScore * 100)}
@@ -237,7 +237,7 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                         ...(region.population ? [{ label: "Population", val: region.population }] : []),
                     ].map(({ label, val }) => (
                         <div key={label} className="flex gap-2 text-[12px]">
-                            <span className="text-[#9CA3AF] w-16 flex-shrink-0">{label}</span>
+                            <span className="text-[#9CA3AF] w-16 shrink-0">{label}</span>
                             <span className="text-[#374151]">{val}</span>
                         </div>
                     ))}
@@ -287,7 +287,7 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                     <ul className="space-y-1">
                         {history.consequences.map((c) => (
                             <li key={c} className="flex items-start gap-1.5 text-[12px] text-[#6B7280]">
-                                <span className="text-[#C7A56B] mt-0.5 flex-shrink-0">–</span>
+                                <span className="text-[#C7A56B] mt-0.5 shrink-0">–</span>
                                 {c}
                             </li>
                         ))}
@@ -343,7 +343,7 @@ export default function IntelligencePanel({ region }: IntelligencePanelProps) {
                                 key={item}
                                 className="rounded-[6px] border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-[12px] text-[#374151] flex items-start gap-2"
                             >
-                                <span className="text-[#C7A56B] flex-shrink-0 mt-0.5">◆</span>
+                                <span className="text-[#C7A56B] shrink-0 mt-0.5">◆</span>
                                 {item}
                             </div>
                         ))}
@@ -381,7 +381,7 @@ function DriverRow({ label, score, source }: { label: string; score: number; sou
             <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[12px] font-medium text-[#374151] truncate pr-2">{label}</span>
                 <span
-                    className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                    className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
                     style={{ backgroundColor: bg, color }}
                 >
                     {score}

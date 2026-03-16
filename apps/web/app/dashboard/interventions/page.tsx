@@ -52,7 +52,7 @@ export default function InterventionsPage() {
 
       {/* Policy note */}
       <div className="rounded-[8px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 flex items-start gap-3">
-        <svg className="h-4 w-4 text-[#9CA3AF] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="h-4 w-4 text-[#9CA3AF] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <p className="text-[12px] leading-relaxed text-[#6B7280]">
@@ -78,7 +78,7 @@ export default function InterventionsPage() {
         {/* Side: cost band definitions */}
         <div className="space-y-4">
           <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-5">
-            <h3 className="text-[13px] font-semibold text-[#111111] mb-4 uppercase tracking-[0.1em]">Cost Band Guide</h3>
+            <h3 className="text-[13px] font-semibold text-[#111111] mb-4 uppercase tracking-widest">Cost Band Guide</h3>
             <div className="space-y-3">
               {Object.entries(COST_DEFINITIONS).map(([band, desc]) => {
                 const colors: Record<string, { bg: string; text: string; border: string }> = {
@@ -103,7 +103,7 @@ export default function InterventionsPage() {
           </div>
 
           <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-5">
-            <h3 className="text-[13px] font-semibold text-[#111111] mb-3 uppercase tracking-[0.1em]">Confidence Levels</h3>
+            <h3 className="text-[13px] font-semibold text-[#111111] mb-3 uppercase tracking-widest">Confidence Levels</h3>
             <div className="space-y-2 text-[12px] text-[#6B7280]">
               <div><strong className="text-[#3A6B33]">High</strong> — Based on multiple validated data sources</div>
               <div><strong className="text-[#8C6A3D]">Medium</strong> — Modelled with partial validation</div>

@@ -69,7 +69,7 @@ export default function RegionalRiskPage() {
             <thead>
               <tr className="border-b border-[#F3F4F6]">
                 {["Region", "Population", "Risk Level", "Stability Index", "Primary Driver", "Why This Matters", "Confidence"].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.1em] text-[#9CA3AF]">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[#9CA3AF]">{h}</th>
                 ))}
               </tr>
             </thead>

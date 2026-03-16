@@ -92,7 +92,7 @@ export default function RiskMap({ onRegionSelect, selectedRegionId }: RiskMapPro
               className="inline-flex items-center gap-1.5 text-[11px] text-[#374151]"
             >
               <span
-                className="inline-block h-3 w-3 rounded-sm flex-shrink-0"
+                className="inline-block h-3 w-3 rounded-sm shrink-0"
                 style={{ backgroundColor: pal.fill, border: `1px solid ${pal.stroke}` }}
               />
               {labels[idx]}
