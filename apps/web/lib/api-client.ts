@@ -203,6 +203,24 @@ class ApiClient {
     }>>('/violence/timeseries');
   }
 
+  async getSatelliteDates(days = 30) {
+    return this.request<{
+      layer: string;
+      provider: string;
+      dates: string[];
+    }>(`/satellite/dates?days=${days}`);
+  }
+
+  async getSatelliteTileTemplate(dateValue?: string) {
+    const query = dateValue ? `?date_value=${encodeURIComponent(dateValue)}` : "";
+    return this.request<{
+      provider: string;
+      layer: string;
+      date: string;
+      tileTemplate: string;
+    }>(`/satellite/tile-template${query}`);
+  }
+
   // Alerts
   async getAlerts() {
     return this.request<Array<{

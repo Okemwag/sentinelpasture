@@ -1,0 +1,80 @@
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    container_name: sentinelpasture-postgres
+    environment:
+      POSTGRES_DB: sentinelpasture
+      POSTGRES_USER: sentinelpasture
+      POSTGRES_PASSWORD: sentinelpasture
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    container_name: sentinelpasture-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  ai:
+    build:
+      context: .
+      dockerfile: apps/ai/deployments/Dockerfile.inference
+    container_name: sentinelpasture-ai
+    ports:
+      - "8100:8100"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/deployments/Dockerfile
+    container_name: sentinelpasture-api
+    environment:
+      DATABASE_URL: postgresql+psycopg://sentinelpasture:sentinelpasture@postgres:5432/sentinelpasture
+      AI_INFERENCE_URL: http://ai:8100
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai:
+        condition: service_started
+    ports:
+      - "8000:8000"
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: apps/ingestion/deployments/Dockerfile
+    container_name: sentinelpasture-ingestion
+    ports:
+      - "8300:8300"
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: apps/scheduler/deployments/Dockerfile
+    container_name: sentinelpasture-scheduler
+    environment:
+      INGESTION_BASE_URL: http://ingestion:8300
+      AI_INFER_BASE_URL: http://ai:8100
+    depends_on:
+      ingestion:
+        condition: service_started
+      ai:
+        condition: service_started
+    ports:
+      - "8200:8200"
+
+volumes:
+  postgres-data:

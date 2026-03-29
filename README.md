@@ -1,7 +1,10 @@
-# Governance Intel Platform
+# SentinelPasture
 
-This repository is being reshaped into a monorepo for a governance early-warning,
-coordination, and learning system.
+## National Risk Intelligence & Resilience Platform
+
+This repository contains SentinelPasture, a governance early-warning,
+coordination, and learning system. Earlier migration documents may still refer
+to this platform as "Governance Intel Platform" while naming is being aligned.
 
 The product is designed to help public-sector teams act before instability
 becomes expensive, violent, or politically destabilizing. It is not just an
@@ -63,6 +66,10 @@ The implementation plan is now tracked in
 
 For the implementation that is live on this branch today, see
 [`docs/architecture/current-state-end-to-end.md`](docs/architecture/current-state-end-to-end.md).
+
+For the SentinelPasture execution program that closes the gap between the
+current prototype and the target product definition, see
+[`docs/product/sentinelpasture-execution-plan.md`](docs/product/sentinelpasture-execution-plan.md).
 
 ## Run Locally
 

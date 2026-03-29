@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta, date
 import csv
 import logging
 from pathlib import Path
 from typing import Any
+from urllib.request import urlopen
+import xml.etree.ElementTree as ET
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Header, HTTPException, Response
@@ -45,6 +47,8 @@ class LoginRequest(BaseModel):
 auth_service = AuthService()
 ai_gateway = AIGateway()
 ROOT = Path(__file__).resolve().parents[3]
+GIBS_WMTS_CAPABILITIES = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/1.0.0/WMTSCapabilities.xml"
+GIBS_LAYER = "MODIS_Terra_CorrectedReflectance_TrueColor"
 
 
 @asynccontextmanager
@@ -140,6 +144,41 @@ def _load_violence_rows(limit: int = 60) -> list[dict[str, Any]]:
     # Keep only the most recent N periods
     rows = rows[-limit:]
     return rows
+
+
+def _fetch_satellite_dates(days: int = 30) -> list[str]:
+    """Fetch available satellite date range from NASA GIBS capabilities."""
+    end_day = date.today()
+    try:
+        with urlopen(GIBS_WMTS_CAPABILITIES, timeout=8) as response:
+            xml_data = response.read()
+        root = ET.fromstring(xml_data)
+        ns = {"wmts": "http://www.opengis.net/wmts/1.0", "ows": "http://www.opengis.net/ows/1.1"}
+        for layer in root.findall(".//wmts:Layer", ns):
+            identifier = layer.find("ows:Identifier", ns)
+            if identifier is None or identifier.text != GIBS_LAYER:
+                continue
+            for dim in layer.findall("wmts:Dimension", ns):
+                dim_id = dim.find("ows:Identifier", ns)
+                value = dim.find("wmts:Value", ns)
+                if dim_id is not None and dim_id.text == "Time" and value is not None and value.text:
+                    raw = value.text
+                    if "/" in raw:
+                        parts = raw.split("/")
+                        end_day = date.fromisoformat(parts[1])
+                    else:
+                        end_day = date.fromisoformat(raw.split(",")[-1])
+                    break
+            break
+    except Exception:
+        logger.warning("Unable to fetch live satellite date capabilities; falling back to recent dates.")
+    start_day = end_day - timedelta(days=max(1, days - 1))
+    out: list[str] = []
+    current = end_day
+    while current >= start_day:
+        out.append(current.isoformat())
+        current -= timedelta(days=1)
+    return out
 
 
 @app.get("/")
@@ -694,6 +733,64 @@ async def violence_timeseries(authorization: str | None = Header(default=None)) 
             "success": True,
             "metadata": {
                 "modelVersion": "baseline-risk-model-v1",
+                "lastUpdated": datetime.utcnow().isoformat(),
+                "confidence": "Medium",
+            },
+        }
+    finally:
+        db.close()
+
+
+@app.get("/api/satellite/dates")
+async def satellite_dates(
+    authorization: str | None = Header(default=None),
+    days: int = 30,
+) -> dict[str, Any]:
+    db = _db()
+    try:
+        _authorize_read(db, authorization, action="satellite.read", resource="satellite_dates")
+        date_list = _fetch_satellite_dates(days=min(max(days, 7), 90))
+        return {
+            "data": {
+                "layer": GIBS_LAYER,
+                "provider": "NASA GIBS",
+                "dates": date_list,
+            },
+            "success": True,
+            "metadata": {
+                "modelVersion": "geospatial-v1",
+                "lastUpdated": datetime.utcnow().isoformat(),
+                "confidence": "Medium",
+            },
+        }
+    finally:
+        db.close()
+
+
+@app.get("/api/satellite/tile-template")
+async def satellite_tile_template(
+    authorization: str | None = Header(default=None),
+    date_value: str | None = None,
+) -> dict[str, Any]:
+    db = _db()
+    try:
+        _authorize_read(db, authorization, action="satellite.read", resource="satellite_tiles")
+        selected = date_value or _fetch_satellite_dates(1)[0]
+        template = (
+            "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/"
+            f"{GIBS_LAYER}/default/{selected}/GoogleMapsCompatible_Level9/"
+            "{z}/{y}/{x}.jpg"
+        )
+        return {
+            "data": {
+                "provider": "NASA GIBS",
+                "layer": GIBS_LAYER,
+                "date": selected,
+                "tileTemplate": template,
+            },
+            "success": True,
+            "metadata": {
+                "modelVersion": "geospatial-v1",
                 "lastUpdated": datetime.utcnow().isoformat(),
                 "confidence": "Medium",
             },
